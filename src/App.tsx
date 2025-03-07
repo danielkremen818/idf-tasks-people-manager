@@ -9,6 +9,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { logger } from "@/lib/logger";
+import Watermark from "@/components/Watermark";
 
 // Pages
 import Index from "./pages/Index";
@@ -127,6 +128,7 @@ const App = () => {
                   } />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
+                <Watermark />
               </Router>
             </TooltipProvider>
           </AppProvider>

@@ -45,9 +45,14 @@
     --sidebar-accent-foreground: 210 20% 98%;
     --sidebar-border: 220 13% 25%;
     --sidebar-ring: 55 74% 56%;
+    
+    /* Theme customization variables */
+    --theme-primary: #F6D365;
+    --theme-background: #222;
+    --base-font-size: 16px;
   }
 
-  /* Light mode overrides - kept for backward compatibility but using dark by default */
+  /* Light mode override */
   .light {
     --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
@@ -86,6 +91,141 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 55 74% 56%;
   }
+
+  /* Military theme */
+  .military {
+    --background: 110 15% 15%;
+    --foreground: 60 30% 96%;
+
+    --card: 110 12% 18%;
+    --card-foreground: 60 30% 96%;
+
+    --popover: 110 12% 18%;
+    --popover-foreground: 60 30% 96%;
+
+    --primary: 110 40% 60%;
+    --primary-foreground: 110 15% 15%;
+
+    --secondary: 110 25% 25%;
+    --secondary-foreground: 60 30% 96%;
+
+    --muted: 110 10% 20%;
+    --muted-foreground: 60 20% 80%;
+
+    --accent: 110 25% 25%;
+    --accent-foreground: 60 30% 96%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 60 30% 96%;
+
+    --border: 110 15% 25%;
+    --input: 110 15% 25%;
+    --ring: 110 40% 60%;
+
+    --sidebar-background: 110 20% 12%;
+    --sidebar-foreground: 60 30% 96%;
+    --sidebar-primary: 110 40% 60%;
+    --sidebar-primary-foreground: 110 15% 15%;
+    --sidebar-accent: 110 25% 25%;
+    --sidebar-accent-foreground: 60 30% 96%;
+    --sidebar-border: 110 15% 25%;
+    --sidebar-ring: 110 40% 60%;
+    
+    /* Theme customization variables */
+    --theme-primary: #86C232;
+    --theme-background: #2D3F2C;
+    --base-font-size: 16px;
+  }
+
+  /* Desert theme */
+  .desert {
+    --background: 30 10% 17%;
+    --foreground: 40 30% 95%;
+
+    --card: 30 8% 20%;
+    --card-foreground: 40 30% 95%;
+
+    --popover: 30 8% 20%;
+    --popover-foreground: 40 30% 95%;
+
+    --primary: 40 70% 60%;
+    --primary-foreground: 30 10% 17%;
+
+    --secondary: 30 20% 30%;
+    --secondary-foreground: 40 30% 95%;
+
+    --muted: 30 10% 25%;
+    --muted-foreground: 40 15% 75%;
+
+    --accent: 30 20% 30%;
+    --accent-foreground: 40 30% 95%;
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 40 30% 95%;
+
+    --border: 30 15% 25%;
+    --input: 30 15% 25%;
+    --ring: 40 70% 60%;
+
+    --sidebar-background: 30 15% 12%;
+    --sidebar-foreground: 40 30% 95%;
+    --sidebar-primary: 40 70% 60%;
+    --sidebar-primary-foreground: 30 10% 17%;
+    --sidebar-accent: 30 20% 30%;
+    --sidebar-accent-foreground: 40 30% 95%;
+    --sidebar-border: 30 15% 25%;
+    --sidebar-ring: 40 70% 60%;
+    
+    /* Theme customization variables */
+    --theme-primary: #E9B872;
+    --theme-background: #3D3937;
+    --base-font-size: 16px;
+  }
+
+  /* Navy theme */
+  .navy {
+    --background: 215 30% 12%;
+    --foreground: 210 20% 98%;
+
+    --card: 215 25% 15%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 215 25% 15%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 200 80% 55%;
+    --primary-foreground: 215 30% 12%;
+
+    --secondary: 215 30% 25%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 215 20% 20%;
+    --muted-foreground: 210 15% 80%;
+
+    --accent: 215 30% 25%;
+    --accent-foreground: 210 20% 98%;
+
+    --destructive: 0 80% 55%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 215 25% 22%;
+    --input: 215 25% 22%;
+    --ring: 200 80% 55%;
+
+    --sidebar-background: 215 35% 10%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 200 80% 55%;
+    --sidebar-primary-foreground: 215 30% 12%;
+    --sidebar-accent: 215 30% 25%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 215 25% 22%;
+    --sidebar-ring: 200 80% 55%;
+    
+    /* Theme customization variables */
+    --theme-primary: #64B6F7;
+    --theme-background: #0F2942;
+    --base-font-size: 16px;
+  }
 }
 
 @layer base {
@@ -96,11 +236,17 @@
   html {
     direction: rtl;
     font-family: 'Heebo', sans-serif;
+    font-size: var(--base-font-size);
   }
 
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Left-to-right direction for English pages */
+  .ltr {
+    direction: ltr;
   }
 }
 
@@ -192,4 +338,158 @@
 /* Army green highlights */
 .green-highlight {
   @apply bg-secondary/20 text-secondary-foreground;
+}
+
+/* Glow effects */
+.drop-shadow-glow {
+  filter: drop-shadow(0 0 8px rgba(246, 211, 101, 0.5));
+}
+
+/* Animations for modern UI */
+@keyframes pulse-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px rgba(246, 211, 101, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 15px rgba(246, 211, 101, 0.7));
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Theme color overrides */
+.theme-primary {
+  color: var(--theme-primary);
+}
+
+.theme-bg {
+  background-color: var(--theme-background);
+}
+
+/* English (LTR) login form fixes */
+.login-form {
+  direction: ltr;
+}
+
+.login-form input {
+  text-align: left;
+}
+
+/* Settings modifiers */
+.theme-preview {
+  transition: all 0.3s ease;
+}
+
+.theme-preview:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* New animations for Task-Force app */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Dashboard enhancements */
+.dashboard-card {
+  @apply backdrop-blur-sm relative overflow-hidden;
+}
+
+.dashboard-card::before {
+  content: '';
+  @apply absolute inset-0 z-[-1] bg-gradient-to-br from-transparent to-black/20 opacity-50;
+}
+
+/* Enhanced dashboard stats cards */
+.stat-card {
+  @apply relative overflow-hidden transition-all duration-300;
+}
+
+.stat-card:hover::after {
+  content: '';
+  @apply absolute inset-0 bg-primary/5 z-[-1];
+}
+
+/* Improved tab styling */
+.tab-enhanced {
+  @apply relative overflow-hidden;
+}
+
+.tab-enhanced::after {
+  content: '';
+  @apply absolute bottom-0 left-0 right-0 h-[2px] bg-primary scale-x-0 transition-transform duration-300 origin-left;
+}
+
+.tab-enhanced:hover::after,
+.tab-active::after {
+  @apply scale-x-100;
+}
+
+/* Enhanced table styling */
+.enhanced-table {
+  @apply divide-y divide-border/30 rounded-lg overflow-hidden;
+}
+
+.enhanced-table th {
+  @apply bg-muted px-4 py-3.5 text-sm font-medium text-foreground/80;
+}
+
+.enhanced-table td {
+  @apply px-4 py-3 text-sm;
+}
+
+.enhanced-table tr {
+  @apply transition-colors hover:bg-muted/40;
+}
+
+/* User management styles */
+.user-avatar {
+  @apply relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full;
+}
+
+.user-avatar-image {
+  @apply aspect-square h-full w-full;
+}
+
+.role-badge-admin {
+  @apply px-2 py-1 rounded-full text-xs font-medium bg-amber-900/30 text-amber-200 border border-amber-800/50;
+}
+
+.role-badge-user {
+  @apply px-2 py-1 rounded-full text-xs font-medium bg-blue-900/30 text-blue-200 border border-blue-800/50;
+}
+
+.role-badge-supervisor {
+  @apply px-2 py-1 rounded-full text-xs font-medium bg-purple-900/30 text-purple-200 border border-purple-800/50;
 }
