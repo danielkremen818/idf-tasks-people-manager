@@ -7,6 +7,7 @@ import { DepartmentProvider, useDepartmentContext } from './DepartmentContext';
 import { ExemptionProvider, useExemptionContext } from './ExemptionContext';
 import { PeopleProvider, usePeopleContext } from './PeopleContext';
 import { TaskProvider, useTaskContext } from './TaskContext';
+import { logger } from '@/lib/logger';
 
 // Create a composite context that combines all domain-specific contexts
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -62,11 +63,6 @@ const AppContextImplementation: React.FC<PropsWithChildren> = ({ children }) => 
     updateTask,
     deleteTask,
   };
-
-  // Don't render if still loading - BaseProvider already shows loading state
-  if (isLoading) {
-    return null;
-  }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

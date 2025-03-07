@@ -1,14 +1,16 @@
 
 import React, { createContext, useState, useEffect, useContext, PropsWithChildren } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { logger, handleError } from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 
 // This context provides base functionality shared across domain-specific contexts
 export interface BaseContextProps {
   isLoading: boolean;
+  setIsLoading: (isLoading: boolean) => void;
   error: Error | null;
+  setError: (error: Error | null) => void;
   isAuthenticated: boolean;
 }
 
@@ -16,7 +18,7 @@ const BaseContext = createContext<BaseContextProps | undefined>(undefined);
 
 export const BaseProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const { isAuthenticated } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   // Provide a loading component that can be reused across contexts
@@ -46,7 +48,9 @@ export const BaseProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   const value = {
     isLoading,
+    setIsLoading,
     error,
+    setError,
     isAuthenticated,
   };
 
