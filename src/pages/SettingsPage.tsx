@@ -11,12 +11,13 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, Database, Sun, Moon, Save, RotateCcw, Info, Brush, Palette, Layout, Globe, BellRing, UserPlus, Trash2, UserCog, Users, Lock } from 'lucide-react';
+import { Shield, Database, Sun, Moon, Save, RotateCcw, Info, Brush, Palette, Layout, Globe, BellRing, UserPlus, Trash2, UserCog, Users, Lock, Sliders } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { UserRole } from '@/lib/types';
+import { Slider } from '@/components/ui/slider';
 
 // Available themes
 const themes = [
@@ -43,6 +44,15 @@ const animationSpeeds = [
   { id: 'fast', name: 'Fast' },
 ];
 
+// Button corner roundness options
+const buttonRoundnessOptions = [
+  { value: 'none', label: 'None', class: 'rounded-none' },
+  { value: 'sm', label: 'Small', class: 'rounded-sm' },
+  { value: 'md', label: 'Medium', class: 'rounded-md' },
+  { value: 'lg', label: 'Large', class: 'rounded-lg' },
+  { value: 'full', label: 'Full', class: 'rounded-full' },
+];
+
 const SettingsPage = () => {
   const { departments, exemptions } = useAppContext();
   const { user, allUsers, updateUser, deleteUser, register } = useAuth();
@@ -53,6 +63,12 @@ const SettingsPage = () => {
   const [fontSize, setFontSize] = useState('md');
   const [animationSpeed, setAnimationSpeed] = useState('normal');
   const [accentColor, setAccentColor] = useState('#F6D365');
+  const [customPrimaryColor, setCustomPrimaryColor] = useState('#F6D365');
+  const [customBackgroundColor, setCustomBackgroundColor] = useState('#222933');
+  const [customTextColor, setCustomTextColor] = useState('#FFFFFF');
+  const [buttonRoundness, setButtonRoundness] = useState('md');
+  const [buttonElevation, setButtonElevation] = useState(1);
+  const [showCredits, setShowCredits] = useState(false);
   
   // System Settings
   const [isDebugMode, setIsDebugMode] = useState(false);
@@ -83,15 +99,26 @@ const SettingsPage = () => {
         setFontSize(settings.fontSize ?? 'md');
         setAnimationSpeed(settings.animationSpeed ?? 'normal');
         setAccentColor(settings.accentColor ?? '#F6D365');
+        setCustomPrimaryColor(settings.customPrimaryColor ?? '#F6D365');
+        setCustomBackgroundColor(settings.customBackgroundColor ?? '#222933');
+        setCustomTextColor(settings.customTextColor ?? '#FFFFFF');
+        setButtonRoundness(settings.buttonRoundness ?? 'md');
+        setButtonElevation(settings.buttonElevation ?? 1);
         setIsDebugMode(settings.isDebugMode ?? false);
         setAppName(settings.appName ?? 'Task-Force');
         setLanguage(settings.language ?? 'he');
         setNotificationsEnabled(settings.notificationsEnabled ?? true);
         setBackupFrequency(settings.backupFrequency ?? 'weekly');
+        setShowCredits(settings.showCredits ?? false);
         
         // Apply theme
         applyTheme(settings.theme ?? 'dark', settings.isDarkMode ?? true);
         applyFontSize(settings.fontSize ?? 'md');
+        applyButtonStyles(
+          settings.buttonRoundness ?? 'md',
+          settings.buttonElevation ?? 1,
+          settings.customPrimaryColor ?? '#F6D365'
+        );
       } catch (error) {
         console.error('Failed to parse saved settings:', error);
       }
@@ -109,14 +136,35 @@ const SettingsPage = () => {
     document.documentElement.classList.add(themeId);
     
     // Apply custom properties
-    document.documentElement.style.setProperty('--theme-primary', theme.primary);
-    document.documentElement.style.setProperty('--theme-background', theme.background);
+    document.documentElement.style.setProperty('--theme-primary', customPrimaryColor || theme.primary);
+    document.documentElement.style.setProperty('--theme-background', customBackgroundColor || theme.background);
+    document.documentElement.style.setProperty('--theme-text', customTextColor || '#FFFFFF');
   };
   
   // Function to apply font size
   const applyFontSize = (size) => {
     const fontSizeObj = fontSizes.find(f => f.id === size) || fontSizes[1];
     document.documentElement.style.setProperty('--base-font-size', fontSizeObj.value);
+  };
+  
+  // Function to apply button styles
+  const applyButtonStyles = (roundness, elevation, primaryColor) => {
+    document.documentElement.style.setProperty('--button-radius', 
+      roundness === 'none' ? '0' : 
+      roundness === 'sm' ? '0.125rem' : 
+      roundness === 'md' ? '0.375rem' : 
+      roundness === 'lg' ? '0.5rem' : 
+      roundness === 'full' ? '9999px' : '0.375rem'
+    );
+    
+    document.documentElement.style.setProperty('--button-elevation', 
+      elevation === 0 ? '0 0 0 rgba(0,0,0,0)' : 
+      elevation === 1 ? '0 2px 4px rgba(0,0,0,0.1)' : 
+      elevation === 2 ? '0 4px 8px rgba(0,0,0,0.15)' : 
+      '0 8px 16px rgba(0,0,0,0.2)'
+    );
+    
+    document.documentElement.style.setProperty('--button-primary-color', primaryColor);
   };
   
   // Function to handle theme toggle
@@ -160,6 +208,48 @@ const SettingsPage = () => {
     });
   };
   
+  // Function to handle button roundness change
+  const handleButtonRoundnessChange = (value) => {
+    setButtonRoundness(value);
+    applyButtonStyles(value, buttonElevation, customPrimaryColor);
+  };
+  
+  // Function to handle button elevation change
+  const handleButtonElevationChange = (value) => {
+    setButtonElevation(value[0]);
+    applyButtonStyles(buttonRoundness, value[0], customPrimaryColor);
+  };
+  
+  // Function to handle primary color change
+  const handlePrimaryColorChange = (value) => {
+    setCustomPrimaryColor(value);
+    applyButtonStyles(buttonRoundness, buttonElevation, value);
+    document.documentElement.style.setProperty('--theme-primary', value);
+  };
+  
+  // Function to handle background color change
+  const handleBackgroundColorChange = (value) => {
+    setCustomBackgroundColor(value);
+    document.documentElement.style.setProperty('--theme-background', value);
+  };
+  
+  // Function to handle text color change
+  const handleTextColorChange = (value) => {
+    setCustomTextColor(value);
+    document.documentElement.style.setProperty('--theme-text', value);
+  };
+  
+  // Function to apply custom theme
+  const applyCustomTheme = () => {
+    applyTheme('dark', true);
+    applyButtonStyles(buttonRoundness, buttonElevation, customPrimaryColor);
+    
+    toast({
+      title: "Custom Theme Applied",
+      description: "Your custom theme has been applied successfully",
+    });
+  };
+  
   // Function to save settings
   const handleSaveSettings = () => {
     const settings = {
@@ -168,11 +258,17 @@ const SettingsPage = () => {
       fontSize,
       animationSpeed,
       accentColor,
+      customPrimaryColor,
+      customBackgroundColor,
+      customTextColor,
+      buttonRoundness,
+      buttonElevation,
       isDebugMode,
       appName,
       language,
       notificationsEnabled,
-      backupFrequency
+      backupFrequency,
+      showCredits
     };
     
     localStorage.setItem('appSettings', JSON.stringify(settings));
@@ -180,6 +276,7 @@ const SettingsPage = () => {
     // Re-apply theme to ensure it takes effect
     applyTheme(currentTheme, isDarkMode);
     applyFontSize(fontSize);
+    applyButtonStyles(buttonRoundness, buttonElevation, customPrimaryColor);
     
     toast({
       title: "Settings Saved",
@@ -195,15 +292,22 @@ const SettingsPage = () => {
     setFontSize('md');
     setAnimationSpeed('normal');
     setAccentColor('#F6D365');
+    setCustomPrimaryColor('#F6D365');
+    setCustomBackgroundColor('#222933');
+    setCustomTextColor('#FFFFFF');
+    setButtonRoundness('md');
+    setButtonElevation(1);
     setIsDebugMode(false);
     setAppName('Task-Force');
     setLanguage('he');
     setNotificationsEnabled(true);
     setBackupFrequency('weekly');
+    setShowCredits(false);
     
     // Apply default theme
     applyTheme('dark', true);
     applyFontSize('md');
+    applyButtonStyles('md', 1, '#F6D365');
     
     // Remove from localStorage
     localStorage.removeItem('appSettings');
@@ -332,10 +436,34 @@ const SettingsPage = () => {
     }
   };
   
+  // Toggle watermark/credits visibility
+  const toggleCredits = () => {
+    setShowCredits(!showCredits);
+  };
+  
   // Animation variants
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
+  
+  // Preview button style based on current settings
+  const previewButtonStyle = {
+    backgroundColor: customPrimaryColor,
+    color: customTextColor,
+    borderRadius: buttonRoundness === 'none' ? '0' : 
+                 buttonRoundness === 'sm' ? '0.125rem' : 
+                 buttonRoundness === 'md' ? '0.375rem' : 
+                 buttonRoundness === 'lg' ? '0.5rem' : 
+                 buttonRoundness === 'full' ? '9999px' : '0.375rem',
+    boxShadow: buttonElevation === 0 ? 'none' : 
+              buttonElevation === 1 ? '0 2px 4px rgba(0,0,0,0.1)' : 
+              buttonElevation === 2 ? '0 4px 8px rgba(0,0,0,0.15)' : 
+              '0 8px 16px rgba(0,0,0,0.2)',
+    padding: '8px 16px',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease'
   };
   
   return (
@@ -362,7 +490,7 @@ const SettingsPage = () => {
           </motion.h1>
           
           <Tabs defaultValue="general" className="space-y-6">
-            <TabsList className="grid grid-cols-4 mb-8">
+            <TabsList className="grid grid-cols-5 mb-8">
               <TabsTrigger value="general" className="flex items-center gap-2">
                 <Info size={16} />
                 כללי
@@ -370,6 +498,10 @@ const SettingsPage = () => {
               <TabsTrigger value="appearance" className="flex items-center gap-2">
                 {isDarkMode ? <Moon size={16} /> : <Sun size={16} />}
                 מראה
+              </TabsTrigger>
+              <TabsTrigger value="buttons" className="flex items-center gap-2">
+                <Sliders size={16} />
+                כפתורים
               </TabsTrigger>
               <TabsTrigger value="system" className="flex items-center gap-2">
                 <Database size={16} />
@@ -525,6 +657,68 @@ const SettingsPage = () => {
                     <Separator />
                     
                     <div className="space-y-2">
+                      <Label>ערכת נושא מותאמת אישית</Label>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="customPrimaryColor">צבע ראשי</Label>
+                            <div 
+                              className="w-10 h-10 rounded-full border border-border"
+                              style={{ backgroundColor: customPrimaryColor }}
+                            ></div>
+                          </div>
+                          <Input 
+                            id="customPrimaryColor" 
+                            type="color" 
+                            value={customPrimaryColor} 
+                            onChange={(e) => handlePrimaryColorChange(e.target.value)}
+                            className="w-full h-10"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="customBackgroundColor">צבע רקע</Label>
+                            <div 
+                              className="w-10 h-10 rounded-full border border-border"
+                              style={{ backgroundColor: customBackgroundColor }}
+                            ></div>
+                          </div>
+                          <Input 
+                            id="customBackgroundColor" 
+                            type="color" 
+                            value={customBackgroundColor} 
+                            onChange={(e) => handleBackgroundColorChange(e.target.value)}
+                            className="w-full h-10"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="customTextColor">צבע טקסט</Label>
+                            <div 
+                              className="w-10 h-10 rounded-full border border-border"
+                              style={{ backgroundColor: customTextColor }}
+                            ></div>
+                          </div>
+                          <Input 
+                            id="customTextColor" 
+                            type="color" 
+                            value={customTextColor} 
+                            onChange={(e) => handleTextColorChange(e.target.value)}
+                            className="w-full h-10"
+                          />
+                        </div>
+                        
+                        <Button onClick={applyCustomTheme} className="w-full">
+                          החל ערכת נושא מותאמת אישית
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div className="space-y-2">
                       <Label htmlFor="fontSize">Font Size</Label>
                       <Select 
                         value={fontSize} 
@@ -559,19 +753,112 @@ const SettingsPage = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="accentColor">Accent Color</Label>
-                      <div className="flex items-center gap-4">
-                        <div 
-                          className="w-10 h-10 rounded-full border border-border"
-                          style={{ backgroundColor: accentColor }}
-                        ></div>
-                        <Input 
-                          id="accentColor" 
-                          type="color" 
-                          value={accentColor} 
-                          onChange={(e) => setAccentColor(e.target.value)}
-                          className="w-full h-10"
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="showCredits">הצג קרדיטים</Label>
+                        <Switch 
+                          id="showCredits" 
+                          checked={showCredits} 
+                          onCheckedChange={toggleCredits}
                         />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        הצג קרדיטים ליוצר האפליקציה
+                      </p>
+                      {showCredits && (
+                        <div className="mt-4 p-3 bg-primary/10 rounded-md text-sm">
+                          <p className="font-medium">יוצר האפליקציה:</p>
+                          <p className="text-primary">DANIEL SAHAR-KREMEN</p>
+                          <p className="text-xs mt-1">תודה שאתם משתמשים באפליקציה שלי!</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="buttons" className="space-y-6">
+              <motion.div variants={cardVariants}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>עיצוב כפתורים</CardTitle>
+                    <CardDescription>התאמה אישית של סגנון הכפתורים באפליקציה</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="p-4 border border-border rounded-lg bg-card/50 flex flex-col items-center justify-center">
+                      <p className="text-sm text-muted-foreground mb-4">תצוגה מקדימה:</p>
+                      <button style={previewButtonStyle}>כפתור לדוגמה</button>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="buttonRoundness">עיגול פינות</Label>
+                        <Select 
+                          value={buttonRoundness} 
+                          onValueChange={handleButtonRoundnessChange}
+                        >
+                          <SelectTrigger id="buttonRoundness">
+                            <SelectValue placeholder="Select button corner roundness" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {buttonRoundnessOptions.map(option => (
+                              <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="buttonElevation">הצללה</Label>
+                          <span className="text-sm">{buttonElevation}</span>
+                        </div>
+                        <Slider
+                          id="buttonElevation"
+                          min={0}
+                          max={3}
+                          step={1}
+                          value={[buttonElevation]}
+                          onValueChange={handleButtonElevationChange}
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>ללא</span>
+                          <span>נמוכה</span>
+                          <span>בינונית</span>
+                          <span>גבוהה</span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>צבע כפתור</Label>
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-8 h-8 rounded-full border border-border"
+                            style={{ backgroundColor: customPrimaryColor }}
+                          ></div>
+                          <Input 
+                            type="color" 
+                            value={customPrimaryColor} 
+                            onChange={(e) => handlePrimaryColorChange(e.target.value)}
+                            className="w-full h-10"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>צבע טקסט</Label>
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-8 h-8 rounded-full border border-border"
+                            style={{ backgroundColor: customTextColor }}
+                          ></div>
+                          <Input 
+                            type="color" 
+                            value={customTextColor} 
+                            onChange={(e) => handleTextColorChange(e.target.value)}
+                            className="w-full h-10"
+                          />
+                        </div>
                       </div>
                     </div>
                   </CardContent>
