@@ -22,19 +22,23 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      onError: (error) => {
-        logger.error('Query error:', { 
-          module: 'QueryClient',
-          data: error 
-        });
+      meta: {
+        onError: (error: unknown) => {
+          logger.error('Query error:', { 
+            module: 'QueryClient',
+            data: error 
+          });
+        }
       }
     },
     mutations: {
-      onError: (error) => {
-        logger.error('Mutation error:', { 
-          module: 'QueryClient',
-          data: error 
-        });
+      meta: {
+        onError: (error: unknown) => {
+          logger.error('Mutation error:', { 
+            module: 'QueryClient',
+            data: error 
+          });
+        }
       }
     }
   }
