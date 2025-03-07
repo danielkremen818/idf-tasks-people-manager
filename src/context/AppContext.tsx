@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useContext, PropsWithChildre
 import { AppContextType, Department, ExemptionType, Person, Task, User } from '@/lib/types';
 import { initialDepartments, initialExemptions, initialPeople, initialTasks } from '@/lib/data';
 import { toast } from '@/hooks/use-toast';
-import { logger } from '@/lib/logger';
+import { logger, handleError } from '@/lib/logger';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 
