@@ -45,6 +45,11 @@
     --sidebar-accent-foreground: 210 20% 98%;
     --sidebar-border: 220 13% 25%;
     --sidebar-ring: 55 74% 56%;
+    
+    /* Theme customization variables */
+    --theme-primary: #F6D365;
+    --theme-background: #222;
+    --base-font-size: 16px;
   }
 
   /* Light mode overrides - kept for backward compatibility but using dark by default */
@@ -96,11 +101,17 @@
   html {
     direction: rtl;
     font-family: 'Heebo', sans-serif;
+    font-size: var(--base-font-size);
   }
 
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Left-to-right direction for English pages */
+  .ltr {
+    direction: ltr;
   }
 }
 
@@ -192,4 +203,51 @@
 /* Army green highlights */
 .green-highlight {
   @apply bg-secondary/20 text-secondary-foreground;
+}
+
+/* Glow effects */
+.drop-shadow-glow {
+  filter: drop-shadow(0 0 8px rgba(246, 211, 101, 0.5));
+}
+
+/* Animations for modern UI */
+@keyframes pulse-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px rgba(246, 211, 101, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 15px rgba(246, 211, 101, 0.7));
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Theme color overrides */
+.theme-primary {
+  color: var(--theme-primary);
+}
+
+.theme-bg {
+  background-color: var(--theme-background);
+}
+
+/* English (LTR) login form fixes */
+.login-form {
+  direction: ltr;
+}
+
+.login-form input {
+  text-align: left;
+}
+
+/* Settings modifiers */
+.theme-preview {
+  transition: all 0.3s ease;
+}
+
+.theme-preview:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }

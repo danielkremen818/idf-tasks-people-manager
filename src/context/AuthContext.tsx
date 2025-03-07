@@ -33,6 +33,13 @@ const mockUsers: (User & { passwordHash: string })[] = [
     passwordHash: bcrypt.hashSync('user123', 10),
     role: 'USER',
   },
+  {
+    id: '3',
+    name: 'System Administrator',
+    email: 'sysadmin@example.com',
+    passwordHash: bcrypt.hashSync('sysadmin123', 10),
+    role: 'ADMIN',
+  },
 ];
 
 // Simple function to encode a user object to a token-like string
