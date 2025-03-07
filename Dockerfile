@@ -50,6 +50,10 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Create a simple health check page
 RUN echo "OK" > /usr/share/nginx/html/health
 
+# Create military texture background
+RUN mkdir -p /usr/share/nginx/html/assets
+COPY public/military-texture.jpg /usr/share/nginx/html/
+
 # Create version info file
 RUN echo "Build date: $(date)" > /usr/share/nginx/html/version.txt
 

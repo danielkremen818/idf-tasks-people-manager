@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '@/context/AppContext';
 import Header from '@/components/Header';
 import TaskCard from '@/components/TaskCard';
@@ -20,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Status, Priority, Task } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid';
 import { Search, Plus, Calendar, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const TasksPage = () => {
   const { tasks, people, exemptions, addTask, updateTask } = useAppContext();
@@ -43,7 +44,7 @@ const TasksPage = () => {
     dueDate: new Date().toISOString().substring(0, 10),
   });
   
-  // Filter eligible people based on their exemptions
+  // Filter eligible people based on their exemptions - THIS IS THE MAIN FIX
   const eligiblePeople = useMemo(() => {
     return people.filter(person => {
       // Check if the person has any prohibited exemptions
@@ -55,6 +56,19 @@ const TasksPage = () => {
       return person.available && !hasProhibitedExemption;
     });
   }, [people, formData.prohibitedExemptionIds]);
+  
+  // Effect to reset assignedPersonId if the current person becomes ineligible
+  useEffect(() => {
+    if (formData.assignedPersonId) {
+      const isPersonEligible = eligiblePeople.some(p => p.id === formData.assignedPersonId);
+      if (!isPersonEligible) {
+        setFormData({
+          ...formData,
+          assignedPersonId: null
+        });
+      }
+    }
+  }, [formData.assignedPersonId, eligiblePeople]);
   
   // Handle opening the dialog for adding a new task
   const handleAddTask = () => {
@@ -82,18 +96,6 @@ const TasksPage = () => {
   
   // Handle form submission
   const handleSubmit = () => {
-    // Check if assigned person is still eligible
-    if (formData.assignedPersonId) {
-      const isEligible = eligiblePeople.some(p => p.id === formData.assignedPersonId);
-      if (!isEligible) {
-        // Reset assignedPersonId if the person is no longer eligible
-        setFormData({
-          ...formData,
-          assignedPersonId: null
-        });
-      }
-    }
-    
     if (selectedTask) {
       updateTask(formData);
     } else {
@@ -160,37 +162,68 @@ const TasksPage = () => {
     
     return matchesSearch && matchesStatus && matchesPriority;
   });
+
+  // Animation variants
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
   
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-900 text-white">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold">משימות</h1>
-            <Button onClick={handleAddTask} className="flex items-center gap-2">
-              <Plus size={16} />
-              הוסף משימה
-            </Button>
-          </div>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="max-w-6xl mx-auto"
+        >
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-between items-center mb-6"
+          >
+            <h1 className="text-3xl font-bold text-amber-500">משימות</h1>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button onClick={handleAddTask} className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700">
+                <Plus size={16} />
+                הוסף משימה
+              </Button>
+            </motion.div>
+          </motion.div>
           
-          <div className="bg-card rounded-lg shadow-sm p-4 mb-6">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="bg-gray-800 rounded-lg shadow-lg p-4 mb-6 border border-gray-700"
+          >
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
-                <Search className="absolute right-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
                 <Input
                   placeholder="חפש לפי כותרת או תיאור..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-3 pr-9"
+                  className="pl-3 pr-9 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
                 />
               </div>
               
               <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as Status | '')}>
-                <SelectTrigger className="w-full md:w-48">
+                <SelectTrigger className="w-full md:w-48 bg-gray-700 border-gray-600 text-white">
                   <SelectValue placeholder="כל הסטטוסים" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-gray-800 border-gray-700 text-white">
                   <SelectItem value="filter-all">כל הסטטוסים</SelectItem>
                   <SelectItem value="ממתין">ממתין</SelectItem>
                   <SelectItem value="בביצוע">בביצוע</SelectItem>
@@ -200,10 +233,10 @@ const TasksPage = () => {
               </Select>
               
               <Select value={priorityFilter} onValueChange={(value) => setPriorityFilter(value as Priority | '')}>
-                <SelectTrigger className="w-full md:w-48">
+                <SelectTrigger className="w-full md:w-48 bg-gray-700 border-gray-600 text-white">
                   <SelectValue placeholder="כל העדיפויות" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-gray-800 border-gray-700 text-white">
                   <SelectItem value="filter-all">כל העדיפויות</SelectItem>
                   <SelectItem value="נמוכה">נמוכה</SelectItem>
                   <SelectItem value="בינונית">בינונית</SelectItem>
@@ -212,64 +245,79 @@ const TasksPage = () => {
                 </SelectContent>
               </Select>
             </div>
-          </div>
+          </motion.div>
           
           {filteredTasks.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-lg text-muted-foreground">לא נמצאו משימות התואמות את החיפוש</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-center py-12"
+            >
+              <p className="text-lg text-gray-400">לא נמצאו משימות התואמות את החיפוש</p>
+            </motion.div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTasks.map(task => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onEdit={handleEditTask}
-                />
-              ))}
-            </div>
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              <AnimatePresence>
+                {filteredTasks.map(task => (
+                  <motion.div key={task.id} variants={item} layout>
+                    <TaskCard
+                      task={task}
+                      onEdit={handleEditTask}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </main>
       
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md bg-gray-800 border-gray-700 text-white">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-amber-500">
               {selectedTask ? 'ערוך משימה' : 'הוסף משימה חדשה'}
             </DialogTitle>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="title">כותרת</Label>
+              <Label htmlFor="title" className="text-gray-300">כותרת</Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="bg-gray-700 border-gray-600 text-white"
               />
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="description">תיאור</Label>
+              <Label htmlFor="description" className="text-gray-300">תיאור</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
+                className="bg-gray-700 border-gray-600 text-white"
               />
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="assignedPerson">מבצע המשימה</Label>
+              <Label htmlFor="assignedPerson" className="text-gray-300">מבצע המשימה</Label>
               <Select 
                 value={formData.assignedPersonId || 'unassigned'} 
                 onValueChange={(value) => setFormData({ ...formData, assignedPersonId: value === 'unassigned' ? null : value })}
               >
-                <SelectTrigger id="assignedPerson">
+                <SelectTrigger id="assignedPerson" className="bg-gray-700 border-gray-600 text-white">
                   <SelectValue placeholder="בחר חייל" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-gray-800 border-gray-700 text-white">
                   <SelectItem value="unassigned">לא מוקצה</SelectItem>
                   {eligiblePeople.map(person => (
                     <SelectItem key={person.id} value={person.id}>
@@ -278,23 +326,27 @@ const TasksPage = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {eligiblePeople.length === 0 && (
+                <p className="text-amber-500 text-sm">אין חיילים זמינים עם הפטורים הדרושים למשימה זו</p>
+              )}
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="dueDate">תאריך יעד</Label>
+              <Label htmlFor="dueDate" className="text-gray-300">תאריך יעד</Label>
               <div className="flex items-center">
-                <Calendar className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 text-muted-foreground" />
+                <Calendar className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 text-gray-400" />
                 <Input
                   id="dueDate"
                   type="date"
                   value={formData.dueDate}
                   onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                  className="bg-gray-700 border-gray-600 text-white"
                 />
               </div>
             </div>
             
             <div className="grid gap-2">
-              <Label>סטטוס</Label>
+              <Label className="text-gray-300">סטטוס</Label>
               <RadioGroup 
                 value={formData.status} 
                 onValueChange={(value) => setFormData({ ...formData, status: value as Status })}
@@ -302,25 +354,25 @@ const TasksPage = () => {
               >
                 <div className="flex items-center space-x-2 rtl:space-x-reverse">
                   <RadioGroupItem value="ממתין" id="status-pending" />
-                  <Label htmlFor="status-pending">ממתין</Label>
+                  <Label htmlFor="status-pending" className="text-gray-300">ממתין</Label>
                 </div>
                 <div className="flex items-center space-x-2 rtl:space-x-reverse">
                   <RadioGroupItem value="בביצוע" id="status-in-progress" />
-                  <Label htmlFor="status-in-progress">בביצוע</Label>
+                  <Label htmlFor="status-in-progress" className="text-gray-300">בביצוע</Label>
                 </div>
                 <div className="flex items-center space-x-2 rtl:space-x-reverse">
                   <RadioGroupItem value="הושלם" id="status-completed" />
-                  <Label htmlFor="status-completed">הושלם</Label>
+                  <Label htmlFor="status-completed" className="text-gray-300">הושלם</Label>
                 </div>
                 <div className="flex items-center space-x-2 rtl:space-x-reverse">
                   <RadioGroupItem value="בוטל" id="status-cancelled" />
-                  <Label htmlFor="status-cancelled">בוטל</Label>
+                  <Label htmlFor="status-cancelled" className="text-gray-300">בוטל</Label>
                 </div>
               </RadioGroup>
             </div>
             
             <div className="grid gap-2">
-              <Label>עדיפות</Label>
+              <Label className="text-gray-300">עדיפות</Label>
               <RadioGroup 
                 value={formData.priority} 
                 onValueChange={(value) => setFormData({ ...formData, priority: value as Priority })}
@@ -328,31 +380,31 @@ const TasksPage = () => {
               >
                 <div className="flex items-center space-x-2 rtl:space-x-reverse">
                   <RadioGroupItem value="נמוכה" id="priority-low" />
-                  <Label htmlFor="priority-low">נמוכה</Label>
+                  <Label htmlFor="priority-low" className="text-gray-300">נמוכה</Label>
                 </div>
                 <div className="flex items-center space-x-2 rtl:space-x-reverse">
                   <RadioGroupItem value="בינונית" id="priority-medium" />
-                  <Label htmlFor="priority-medium">בינונית</Label>
+                  <Label htmlFor="priority-medium" className="text-gray-300">בינונית</Label>
                 </div>
                 <div className="flex items-center space-x-2 rtl:space-x-reverse">
                   <RadioGroupItem value="גבוהה" id="priority-high" />
-                  <Label htmlFor="priority-high">גבוהה</Label>
+                  <Label htmlFor="priority-high" className="text-gray-300">גבוהה</Label>
                 </div>
                 <div className="flex items-center space-x-2 rtl:space-x-reverse">
                   <RadioGroupItem value="דחופה" id="priority-urgent" />
-                  <Label htmlFor="priority-urgent">דחופה</Label>
+                  <Label htmlFor="priority-urgent" className="text-gray-300">דחופה</Label>
                 </div>
               </RadioGroup>
             </div>
             
             <div className="grid gap-2">
-              <Label>כישורים נדרשים</Label>
+              <Label className="text-gray-300">כישורים נדרשים</Label>
               <div className="flex space-x-2 rtl:space-x-reverse">
                 <Input
                   value={skill}
                   onChange={(e) => setSkill(e.target.value)}
                   placeholder="הוסף כישור"
-                  className="flex-1"
+                  className="flex-1 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -360,30 +412,40 @@ const TasksPage = () => {
                     }
                   }}
                 />
-                <Button type="button" onClick={handleAddSkill} size="sm">
+                <Button type="button" onClick={handleAddSkill} size="sm" className="bg-amber-600 hover:bg-amber-700">
                   הוסף
                 </Button>
               </div>
               
               <div className="flex flex-wrap gap-2 mt-2">
-                {formData.requiredSkills.map((skill, index) => (
-                  <div key={index} className="bg-secondary/10 px-3 py-1 rounded-full flex items-center gap-2">
-                    <span className="text-sm">{skill}</span>
-                    <button 
-                      type="button" 
-                      onClick={() => handleRemoveSkill(skill)}
-                      className="text-muted-foreground hover:text-destructive"
+                <AnimatePresence>
+                  {formData.requiredSkills.map((skill, index) => (
+                    <motion.div 
+                      key={index} 
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      className="bg-gray-700 px-3 py-1 rounded-full flex items-center gap-2"
                     >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
+                      <span className="text-sm text-gray-200">{skill}</span>
+                      <motion.button 
+                        type="button" 
+                        onClick={() => handleRemoveSkill(skill)}
+                        className="text-gray-400 hover:text-red-400"
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <X size={14} />
+                      </motion.button>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
             </div>
             
             <div className="grid gap-2">
-              <Label>פטורים שמונעים ביצוע המשימה</Label>
-              <div className="border rounded-md p-3 space-y-3">
+              <Label className="text-gray-300">פטורים שמונעים ביצוע המשימה</Label>
+              <div className="border border-gray-700 rounded-md p-3 space-y-3 bg-gray-800">
                 {exemptions.map(exemption => (
                   <div key={exemption.id} className="flex items-center space-x-2 rtl:space-x-reverse">
                     <Checkbox 
@@ -391,23 +453,23 @@ const TasksPage = () => {
                       checked={formData.prohibitedExemptionIds.includes(exemption.id)}
                       onCheckedChange={(checked) => handleExemptionChange(exemption.id, !!checked)}
                     />
-                    <Label htmlFor={`prohibited-${exemption.id}`} className="text-sm">
+                    <Label htmlFor={`prohibited-${exemption.id}`} className="text-sm text-gray-300">
                       {exemption.name} - {exemption.description}
                     </Label>
                   </div>
                 ))}
                 {exemptions.length === 0 && (
-                  <p className="text-sm text-muted-foreground">אין פטורים מוגדרים במערכת</p>
+                  <p className="text-sm text-gray-400">אין פטורים מוגדרים במערכת</p>
                 )}
               </div>
             </div>
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>
+            <Button variant="outline" onClick={() => setShowDialog(false)} className="border-gray-600 text-gray-300 hover:bg-gray-700">
               ביטול
             </Button>
-            <Button onClick={handleSubmit}>
+            <Button onClick={handleSubmit} className="bg-amber-600 hover:bg-amber-700 text-white">
               {selectedTask ? 'עדכן' : 'הוסף'}
             </Button>
           </DialogFooter>

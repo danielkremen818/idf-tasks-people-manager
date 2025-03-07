@@ -1,13 +1,15 @@
-
 import React, { createContext, useState, useEffect, useContext, PropsWithChildren } from 'react';
-import { AppContextType, Department, ExemptionType, Person, Task } from '@/lib/types';
+import { AppContextType, Department, ExemptionType, Person, Task, User } from '@/lib/types';
 import { initialDepartments, initialExemptions, initialPeople, initialTasks } from '@/lib/data';
 import { toast } from '@/hooks/use-toast';
-import logger, { handleError } from '@/lib/logger';
+import { logger } from '@/lib/logger';
+import { useAuth } from '@/context/AuthContext';
+import { motion } from 'framer-motion';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<PropsWithChildren> = ({ children }) => {
+  const { user, isAuthenticated } = useAuth();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [exemptions, setExemptions] = useState<ExemptionType[]>([]);
   const [people, setPeople] = useState<Person[]>([]);
@@ -21,6 +23,12 @@ export const AppProvider: React.FC<PropsWithChildren> = ({ children }) => {
         logger.info('Loading application data', { module: 'AppContext' });
         setIsLoading(true);
 
+        // Only load data if the user is authenticated
+        if (!isAuthenticated) {
+          setIsLoading(false);
+          return;
+        }
+
         // Load data from localStorage or use initial data
         const loadedDepartments = localStorage.getItem('departments');
         const loadedExemptions = localStorage.getItem('exemptions');
@@ -30,7 +38,10 @@ export const AppProvider: React.FC<PropsWithChildren> = ({ children }) => {
         if (loadedDepartments) {
           setDepartments(JSON.parse(loadedDepartments));
         } else {
-          setDepartments(initialDepartments);
+          setDepartments(initialDepartments.map(dept => ({
+            ...dept,
+            name: dept.name.replace(/יחידה/g, 'מדור')
+          })));
           logger.debug('Using initial departments data', { module: 'AppContext' });
         }
 
@@ -59,7 +70,7 @@ export const AppProvider: React.FC<PropsWithChildren> = ({ children }) => {
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Failed to load data');
         setError(error);
-        handleError(error, 'AppContext');
+        console.error(error);
         toast({
           title: "שגיאה בטעינת נתונים",
           description: "אירעה שגיאה בטעינת הנתונים. אנא רענן את הדף.",
@@ -71,12 +82,12 @@ export const AppProvider: React.FC<PropsWithChildren> = ({ children }) => {
     };
 
     loadData();
-  }, []);
+  }, [isAuthenticated]);
 
-  // Save to localStorage whenever data changes
+  // Save to localStorage whenever data changes or when auth status changes
   useEffect(() => {
     try {
-      if (!isLoading) {
+      if (!isLoading && isAuthenticated) {
         logger.debug('Saving data to localStorage', { module: 'AppContext' });
         localStorage.setItem('departments', JSON.stringify(departments));
         localStorage.setItem('exemptions', JSON.stringify(exemptions));
@@ -84,28 +95,28 @@ export const AppProvider: React.FC<PropsWithChildren> = ({ children }) => {
         localStorage.setItem('tasks', JSON.stringify(tasks));
       }
     } catch (err) {
-      handleError(err, 'AppContext');
+      console.error(err);
       toast({
         title: "שגיאה בשמירת נתונים",
         description: "אירעה שגיאה בשמירת הנתונים במערכת.",
         variant: "destructive",
       });
     }
-  }, [departments, exemptions, people, tasks, isLoading]);
+  }, [departments, exemptions, people, tasks, isLoading, isAuthenticated]);
 
   const addDepartment = (department: Department) => {
     try {
       setDepartments([...departments, department]);
       toast({
-        title: "יחידה נוספה",
-        description: `היחידה "${department.name}" נוספה בהצלחה`,
+        title: "מדור נוסף",
+        description: `המדור "${department.name}" נוסף בהצלחה`,
       });
       logger.info(`Department added: ${department.name}`, { module: 'AppContext' });
     } catch (err) {
-      handleError(err, 'AppContext');
+      console.error(err);
       toast({
-        title: "שגיאה בהוספת יחידה",
-        description: "אירעה שגיאה בהוספת היחידה. אנא נסה שנית.",
+        title: "שגיאה בהוספת מדור",
+        description: "אירעה שגיאה בהוספת המדור. אנא נסה שנית.",
         variant: "destructive",
       });
     }
@@ -115,15 +126,15 @@ export const AppProvider: React.FC<PropsWithChildren> = ({ children }) => {
     try {
       setDepartments(departments.map(d => d.id === department.id ? department : d));
       toast({
-        title: "יחידה עודכנה",
-        description: `היחידה "${department.name}" עודכנה בהצלחה`,
+        title: "מדור עודכן",
+        description: `המדור "${department.name}" עודכן בהצלחה`,
       });
       logger.info(`Department updated: ${department.name}`, { module: 'AppContext' });
     } catch (err) {
-      handleError(err, 'AppContext');
+      console.error(err);
       toast({
-        title: "שגיאה בעדכון יחידה",
-        description: "אירעה שגיאה בעדכון היחידה. אנא נסה שנית.",
+        title: "שגיאה בעדכון מדור",
+        description: "אירעה שגיאה בעדכון המדור. אנא נסה שנית.",
         variant: "destructive",
       });
     }
@@ -135,16 +146,16 @@ export const AppProvider: React.FC<PropsWithChildren> = ({ children }) => {
       if (departmentToDelete) {
         setDepartments(departments.filter(d => d.id !== id));
         toast({
-          title: "יחידה נמחקה",
-          description: `היחידה "${departmentToDelete.name}" נמחקה בהצלחה`,
+          title: "מדור נמחק",
+          description: `המדור "${departmentToDelete.name}" נמחק בהצלחה`,
         });
         logger.info(`Department deleted: ${departmentToDelete.name}`, { module: 'AppContext' });
       }
     } catch (err) {
-      handleError(err, 'AppContext');
+      console.error(err);
       toast({
-        title: "שגיאה במחיקת יחידה",
-        description: "אירעה שגיאה במחיקת היחידה. אנא נסה שנית.",
+        title: "שגיאה במחיקת מדור",
+        description: "אירעה שגיאה במחיקת המדור. אנא נסה שנית.",
         variant: "destructive",
       });
     }
@@ -286,7 +297,7 @@ export const AppProvider: React.FC<PropsWithChildren> = ({ children }) => {
     try {
       setTasks(tasks.map(t => t.id === task.id ? task : t));
       toast({
-        title: "משימה עודכנה", 
+        title: "משימה עודכנה",
         description: `המשימה "${task.title}" עודכנה בהצלחה`,
       });
       logger.info(`Task updated: ${task.title}`, { module: 'AppContext' });
@@ -326,6 +337,13 @@ export const AppProvider: React.FC<PropsWithChildren> = ({ children }) => {
     exemptions,
     people,
     tasks,
+    user: user,
+    isAuthenticated,
+    isLoading,
+    error,
+    login: async () => {},  // These are handled in AuthContext
+    logout: () => {},       // These are handled in AuthContext
+    register: async () => {}, // These are handled in AuthContext
     addDepartment,
     updateDepartment,
     deleteDepartment,
@@ -338,20 +356,29 @@ export const AppProvider: React.FC<PropsWithChildren> = ({ children }) => {
     addTask,
     updateTask,
     deleteTask,
-    isLoading,
-    error,
   };
 
   // Show loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em]" role="status">
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center"
+        >
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-amber-500 border-r-transparent align-[-0.125em]" role="status">
             <span className="sr-only">טוען...</span>
           </div>
-          <p className="mt-4 text-lg">טוען נתונים...</p>
-        </div>
+          <motion.p 
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mt-4 text-lg text-white"
+          >
+            טוען נתונים...
+          </motion.p>
+        </motion.div>
       </div>
     );
   }

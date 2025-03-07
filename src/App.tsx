@@ -5,7 +5,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, HashRouter } from "react-router-dom";
 import { AppProvider } from "@/context/AppContext";
+import { AuthProvider } from "@/context/AuthContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { logger } from "@/lib/logger";
 
 // Pages
@@ -16,6 +18,9 @@ import DepartmentsPage from "./pages/DepartmentsPage";
 import ExemptionsPage from "./pages/ExemptionsPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import UnauthorizedPage from "./pages/UnauthorizedPage";
 
 // Configure query client with better error handling
 const queryClient = new QueryClient({
@@ -67,29 +72,59 @@ const Router = shouldUseHashRouter() ? HashRouter : BrowserRouter;
 
 // Apply dark mode by default
 if (typeof document !== 'undefined') {
-  document.documentElement.classList.remove('light');
+  document.documentElement.classList.add('dark');
 }
 
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <AppProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <Router>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/people" element={<PeoplePage />} />
-              <Route path="/tasks" element={<TasksPage />} />
-              <Route path="/departments" element={<DepartmentsPage />} />
-              <Route path="/exemptions" element={<ExemptionsPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Router>
-        </TooltipProvider>
-      </AppProvider>
+      <AuthProvider>
+        <AppProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Router>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/unauthorized" element={<UnauthorizedPage />} />
+                
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <Index />
+                  </ProtectedRoute>
+                } />
+                <Route path="/people" element={
+                  <ProtectedRoute>
+                    <PeoplePage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tasks" element={
+                  <ProtectedRoute>
+                    <TasksPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/departments" element={
+                  <ProtectedRoute>
+                    <DepartmentsPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/exemptions" element={
+                  <ProtectedRoute>
+                    <ExemptionsPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/settings" element={
+                  <ProtectedRoute allowedRoles={['ADMIN', 'SUPERVISOR']}>
+                    <SettingsPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Router>
+          </TooltipProvider>
+        </AppProvider>
+      </AuthProvider>
     </QueryClientProvider>
   </ErrorBoundary>
 );
