@@ -17,10 +17,10 @@ const Watermark: React.FC = () => {
   
   return (
     <motion.div 
-      className="fixed bottom-2 right-2 text-[8px] text-white/10 select-none z-50"
+      className="fixed bottom-2 right-2 text-[8px] text-white/20 select-none z-50 cursor-pointer"
       initial={{ opacity: 0.1 }}
       animate={{ 
-        opacity: hovered ? 0.8 : 0.1,
+        opacity: hovered ? 0.8 : 0.2,
         scale: clicked ? [1, 1.5, 0.8, 1.2, 1] : 1,
         rotate: clicked ? [0, 10, -10, 5, 0] : 0,
         y: clicked ? [0, -10, 5, -5, 0] : 0

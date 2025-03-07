@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -83,15 +84,55 @@ const LoginPage = () => {
     }
   };
 
+  // Floating particles animation
+  const particles = Array.from({ length: 20 }, (_, i) => i + 1);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 bg-[url('/military-texture.jpg')] bg-cover bg-blend-overlay">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      {/* Animated Background Particles */}
+      {particles.map((particle) => (
+        <motion.div
+          key={particle}
+          className="absolute rounded-full bg-white/5"
+          initial={{
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            scale: Math.random() * 0.5 + 0.2,
+          }}
+          animate={{
+            x: [
+              Math.random() * window.innerWidth,
+              Math.random() * window.innerWidth,
+              Math.random() * window.innerWidth,
+            ],
+            y: [
+              Math.random() * window.innerHeight,
+              Math.random() * window.innerHeight,
+              Math.random() * window.innerHeight,
+            ],
+            opacity: [0.1, 0.3, 0.1],
+          }}
+          transition={{
+            duration: Math.random() * 20 + 10,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+          style={{
+            width: `${Math.random() * 20 + 5}px`,
+            height: `${Math.random() * 20 + 5}px`,
+          }}
+        />
+      ))}
+
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-teal-500/10 mix-blend-overlay"></div>
+
       <motion.div
         initial="hidden"
         animate="visible"
         variants={containerVariants}
-        className="w-full max-w-md p-4"
+        className="w-full max-w-md p-4 relative z-10"
       >
-        <Card className="border-gray-700 bg-gray-800/90 backdrop-blur-sm text-white overflow-hidden">
+        <Card className="border border-white/10 bg-black/40 backdrop-blur-xl text-white overflow-hidden shadow-xl">
           <motion.div variants={itemVariants}>
             <CardHeader className="space-y-1 text-center relative">
               <motion.div 
@@ -107,7 +148,22 @@ const LoginPage = () => {
                   }
                 }}
               >
-                <Lock className="h-14 w-14 text-amber-500 drop-shadow-glow" />
+                <motion.div
+                  initial={{ scale: 0.8 }}
+                  animate={{ 
+                    scale: [0.8, 1.1, 0.9, 1],
+                    rotateZ: [0, 10, -10, 0],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                  }}
+                  className="relative"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full blur-lg opacity-70 -z-10"></div>
+                  <Lock className="h-16 w-16 text-white drop-shadow-glow" />
+                </motion.div>
               </motion.div>
               
               <motion.h1
@@ -117,7 +173,7 @@ const LoginPage = () => {
                   y: 0,
                   transition: { duration: 0.5, delay: 0.2 }
                 }}
-                className="text-3xl font-bold tracking-tight text-amber-500"
+                className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-400 via-purple-500 to-blue-400 bg-clip-text text-transparent"
               >
                 TASK-FORCE
               </motion.h1>
@@ -132,14 +188,14 @@ const LoginPage = () => {
               
               {/* Animated border */}
               <motion.div 
-                className="absolute top-0 right-0 h-1 bg-gradient-to-r from-amber-600/0 via-amber-600 to-amber-600/0"
+                className="absolute top-0 right-0 h-1 bg-gradient-to-r from-purple-600/0 via-purple-600 to-purple-600/0"
                 initial={{ width: 0 }}
                 animate={{ width: "100%" }}
                 transition={{ duration: 0.8, delay: 0.5 }}
               />
               
               <motion.div 
-                className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-amber-600/0 via-amber-600 to-amber-600/0"
+                className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-blue-600/0 via-blue-600 to-blue-600/0"
                 initial={{ width: 0 }}
                 animate={{ width: "100%" }}
                 transition={{ duration: 0.8, delay: 0.7 }}
@@ -175,7 +231,7 @@ const LoginPage = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:ring-amber-500 focus:border-amber-500"
+                    className="pl-10 bg-black/30 border-white/10 text-white placeholder:text-gray-500 focus:ring-purple-500 focus:border-purple-500"
                   />
                 </div>
               </motion.div>
@@ -191,7 +247,7 @@ const LoginPage = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:ring-amber-500 focus:border-amber-500"
+                    className="pl-10 bg-black/30 border-white/10 text-white placeholder:text-gray-500 focus:ring-purple-500 focus:border-purple-500"
                   />
                 </div>
               </motion.div>
@@ -205,7 +261,7 @@ const LoginPage = () => {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium relative overflow-hidden group"
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium relative overflow-hidden group"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center justify-center">
@@ -222,7 +278,7 @@ const LoginPage = () => {
                           Access System
                         </span>
                         <motion.span 
-                          className="absolute inset-0 bg-amber-500/30 z-0"
+                          className="absolute inset-0 bg-white/10 z-0"
                           initial={{ x: '-100%' }}
                           whileHover={{ x: '100%' }}
                           transition={{ duration: 0.8, ease: "easeInOut" }}
@@ -260,17 +316,17 @@ const LoginPage = () => {
                       transition={{ duration: 0.3 }}
                       className="overflow-hidden w-full"
                     >
-                      <div className="mt-2 space-y-1 bg-gray-700/50 p-3 rounded-md">
+                      <div className="mt-2 space-y-1 bg-white/5 p-3 rounded-md backdrop-blur-sm">
                         <div className="flex flex-col md:flex-row md:justify-between gap-1">
-                          <span className="font-semibold text-amber-400">Admin:</span>
+                          <span className="font-semibold text-purple-400">Admin:</span>
                           <span className="text-white">admin@example.com / admin123</span>
                         </div>
                         <div className="flex flex-col md:flex-row md:justify-between gap-1">
-                          <span className="font-semibold text-amber-400">Task Force Commander:</span>
+                          <span className="font-semibold text-purple-400">Task Force Commander:</span>
                           <span className="text-white">commander@taskforce.com / commander123</span>
                         </div>
                         <div className="flex flex-col md:flex-row md:justify-between gap-1">
-                          <span className="font-semibold text-amber-400">User:</span>
+                          <span className="font-semibold text-purple-400">User:</span>
                           <span className="text-white">user@example.com / user123</span>
                         </div>
                       </div>
@@ -282,7 +338,7 @@ const LoginPage = () => {
               <Button 
                 variant="link" 
                 onClick={() => navigate('/register')}
-                className="text-amber-500 hover:text-amber-400"
+                className="text-purple-400 hover:text-purple-300"
               >
                 Don't have an account? Register here
               </Button>
@@ -290,7 +346,7 @@ const LoginPage = () => {
           </motion.div>
           
           <motion.div 
-            className="absolute inset-0 border border-amber-500/20 rounded-lg pointer-events-none"
+            className="absolute inset-0 border border-white/10 rounded-lg pointer-events-none"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
@@ -298,7 +354,7 @@ const LoginPage = () => {
           
           {/* Animated background elements */}
           <motion.div 
-            className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-amber-600/20 blur-3xl"
+            className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-purple-600/20 blur-3xl"
             animate={{ 
               scale: [1, 1.2, 1],
               opacity: [0.2, 0.3, 0.2],
