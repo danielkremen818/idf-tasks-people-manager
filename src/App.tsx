@@ -47,6 +47,17 @@ const queryClient = new QueryClient({
 // Log application startup
 logger.info('Application starting up', { module: 'App' });
 
+// Determine basename for router
+const getBasename = () => {
+  // Check if we're in a deployment preview environment
+  const hostname = window.location.hostname;
+  if (hostname.includes('preview--') && hostname.includes('lovable.app')) {
+    console.log('Running in preview environment with basename');
+    return '/';
+  }
+  return '/';
+};
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -54,7 +65,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
+          <BrowserRouter basename={getBasename()}>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/people" element={<PeoplePage />} />

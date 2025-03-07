@@ -12,6 +12,11 @@ RUN npm ci
 # Copy the source code
 COPY . .
 
+# Set environment variables for build
+ENV NODE_ENV=production
+ENV PUBLIC_URL=/
+ENV VITE_BASE_URL=/
+
 # Build the application
 RUN npm run build
 
@@ -29,7 +34,7 @@ EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost/ || exit 1
+  CMD wget -q --spider http://localhost/ || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
