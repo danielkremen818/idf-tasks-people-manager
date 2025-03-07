@@ -396,6 +396,15 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
@@ -491,4 +500,79 @@
 
 .role-badge-supervisor {
   @apply px-2 py-1 rounded-full text-xs font-medium bg-purple-900/30 text-purple-200 border border-purple-800/50;
+}
+
+/* Simplified animations to avoid errors */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { 
+    opacity: 0.8; 
+  }
+  50% { 
+    opacity: 1; 
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Button overrides to ensure contrast and readability */
+.button-theme-aware {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+}
+
+.button-theme-aware-outlined {
+  @apply border border-primary text-primary hover:bg-primary/10;
+}
+
+/* Settings button specific fixes */
+.settings-save-button {
+  @apply bg-primary text-primary-foreground font-medium hover:bg-primary/90;
+}
+
+/* Default button contrast fix */
+button[type="submit"],
+.button-primary {
+  @apply text-primary-foreground hover:bg-primary/90;
+}
+
+/* Additional contrast safety for all themes */
+.military button {
+  @apply text-primary-foreground;
+}
+
+.desert button {
+  @apply text-primary-foreground;
+}
+
+.navy button {
+  @apply text-primary-foreground;
 }

@@ -102,8 +102,6 @@ services:
       - app
     networks:
       - task-manager-network
-    environment:
-      - VIRTUAL_HOST=preview--idf-tasks-people-manager.lovable.app,idf-tasks-people-manager.lovable.app
     deploy:
       resources:
         limits:

@@ -9,7 +9,7 @@ if [ -n "$POSTGRES_HOST" ]; then
   echo "Waiting for PostgreSQL at $POSTGRES_HOST to be ready..."
   
   RETRIES=5
-  until pg_isready -h $POSTGRES_HOST -U $POSTGRES_USER || [ $RETRIES -eq 0 ]; do
+  until pg_isready -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB || [ $RETRIES -eq 0 ]; do
     echo "Waiting for PostgreSQL server to be ready... $((RETRIES)) remaining attempts..."
     RETRIES=$((RETRIES-1))
     sleep 5

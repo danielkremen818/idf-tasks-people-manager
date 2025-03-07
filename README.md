@@ -1,69 +1,168 @@
-# Welcome to your Lovable project
 
-## Project info
+# Task-Force: Military Personnel and Task Management System
 
-**URL**: https://lovable.dev/projects/ed76e642-cc98-4ef8-ac50-b1d0db8d719f
+Task-Force is a comprehensive system designed for military personnel management and task assignment. It provides an intuitive interface for tracking personnel, assigning tasks, managing departments, and handling exemptions.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- **User Management**: Create and manage users with different roles (Admin, Supervisor, User)
+- **Personnel Management**: Track all personnel, their departments, and exemptions
+- **Task Assignment**: Assign tasks to personnel based on availability and skills
+- **Department Organization**: Organize personnel into departments with custom colors
+- **Exemption Tracking**: Track personnel exemptions and ensure task assignments respect these limitations
+- **Responsive Design**: Works on desktop and mobile devices
+- **Customizable Themes**: Choose between different themes (Military, Desert, Navy)
 
-**Use Lovable**
+## Deployment Options
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/ed76e642-cc98-4ef8-ac50-b1d0db8d719f) and start prompting.
+### Option 1: Docker Compose Deployment
 
-Changes made via Lovable will be committed automatically to this repo.
+The easiest way to deploy the application is using Docker Compose, which will set up the frontend, database, and related services.
 
-**Use your preferred IDE**
+#### Prerequisites
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Docker and Docker Compose installed on your system
+- Git (to clone the repository)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+#### Steps
 
-Follow these steps:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/task-force.git
+   cd task-force
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+2. Start the application:
+   ```bash
+   docker-compose up -d
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+3. Access the application:
+   - Frontend: http://localhost:8080
+   - PostgreSQL: localhost:5432
+   - pgAdmin (database management): http://localhost:5050
 
-# Step 3: Install the necessary dependencies.
-npm i
+4. Stop the application:
+   ```bash
+   docker-compose down
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### Option 2: OpenShift Deployment
+
+For enterprise deployment, OpenShift is recommended.
+
+#### Prerequisites
+
+- Access to an OpenShift cluster
+- OpenShift CLI (`oc`) installed and configured
+- Git (to clone the repository)
+
+#### Steps
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/task-force.git
+   cd task-force
+   ```
+
+2. Log in to your OpenShift cluster:
+   ```bash
+   oc login --token=<your-token> --server=<your-server>
+   ```
+
+3. Create a new project:
+   ```bash
+   oc new-project task-force
+   ```
+
+4. Create the necessary secrets:
+   ```bash
+   oc create secret generic db-credentials \
+     --from-literal=POSTGRES_USER=admin \
+     --from-literal=POSTGRES_PASSWORD=password \
+     --from-literal=POSTGRES_DB=taskmanager
+   ```
+
+5. Apply the OpenShift deployment configuration:
+   ```bash
+   oc apply -f openshift-deployment.yaml
+   ```
+
+6. Verify the deployment:
+   ```bash
+   oc get pods
+   oc get services
+   oc get routes
+   ```
+
+7. Access the application using the route created by OpenShift:
+   ```bash
+   oc get route task-force -o jsonpath='{.spec.host}'
+   ```
+
+## Default Admin Credentials
+
+For initial login, use the following admin credentials:
+
+- **Email**: commander@taskforce.com
+- **Password**: commander123
+
+⚠️ **Important Security Notice**: Change these default credentials immediately after first login for production environments.
+
+## Development
+
+### Prerequisites
+
+- Node.js (v16 or higher)
+- npm or yarn
+- PostgreSQL (if running locally without Docker)
+
+### Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/task-force.git
+   cd task-force
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Access the application at http://localhost:3000
+
+## Project Structure
+
+```
+├── Dockerfile                 # Docker configuration
+├── docker-compose.yml         # Docker Compose configuration
+├── docker-entrypoint.sh       # Docker entrypoint script
+├── init-db.sql                # Database initialization script
+├── nginx.conf                 # Nginx configuration
+├── openshift-deployment.yaml  # OpenShift deployment configuration
+├── public/                    # Static assets
+├── src/
+│   ├── components/            # React components
+│   │   ├── ui/                # UI components (buttons, cards, etc.)
+│   │   └── ...
+│   ├── context/               # React context providers
+│   ├── hooks/                 # Custom React hooks
+│   ├── lib/                   # Utility functions and types
+│   ├── pages/                 # Page components
+│   └── ...
+└── ...
 ```
 
-**Edit a file directly in GitHub**
+## License
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+This project is proprietary and confidential. Unauthorized copying, transfer, or use is strictly prohibited.
 
-**Use GitHub Codespaces**
+## Support
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/ed76e642-cc98-4ef8-ac50-b1d0db8d719f) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+For support, please contact the system administrator.

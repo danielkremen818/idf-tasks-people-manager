@@ -37,8 +37,8 @@ RUN npm run build && \
 # Stage 2: Serve the application
 FROM nginx:alpine
 
-# Add security headers and optimize nginx
-RUN apk add --no-cache curl postgresql-client && \
+# Add necessary utilities and dependencies
+RUN apk add --no-cache curl postgresql-client su-exec && \
     rm -rf /etc/nginx/conf.d/*
 
 # Copy the built application from the previous stage
