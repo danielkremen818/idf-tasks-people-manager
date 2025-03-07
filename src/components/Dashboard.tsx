@@ -7,6 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart as 
 import { Status, Priority } from '@/lib/types';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 const Dashboard: React.FC = () => {
   const {
     people,
@@ -24,10 +25,10 @@ const Dashboard: React.FC = () => {
   const completedTasks = tasks.filter(t => t.status === 'הושלם').length;
   const cancelledTasks = tasks.filter(t => t.status === 'בוטל').length;
 
-  // Priority stats
-  const highPriorityTasks = tasks.filter(t => t.priority === 'דחוף').length;
-  const mediumPriorityTasks = tasks.filter(t => t.priority === 'בינוני').length;
-  const lowPriorityTasks = tasks.filter(t => t.priority === 'נמוך').length;
+  // Priority stats - fixing the comparison to use the correct priority values
+  const highPriorityTasks = tasks.filter(t => t.priority === 'דחופה').length;
+  const mediumPriorityTasks = tasks.filter(t => t.priority === 'בינונית').length;
+  const lowPriorityTasks = tasks.filter(t => t.priority === 'נמוכה').length;
 
   // Calculate task completion rate
   const completionRate = tasks.length > 0 ? Math.round(completedTasks / tasks.length * 100) : 0;
@@ -51,22 +52,22 @@ const Dashboard: React.FC = () => {
     color: '#EF4444'
   }];
 
-  // Priority data for pie chart
+  // Priority data for pie chart - updating to match correct Priority type values
   const priorityData = [{
-    name: 'דחוף',
+    name: 'דחופה',
     value: highPriorityTasks,
     color: '#EF4444'
   }, {
-    name: 'בינוני',
+    name: 'בינונית',
     value: mediumPriorityTasks,
     color: '#F59E0B'
   }, {
-    name: 'נמוך',
+    name: 'נמוכה',
     value: lowPriorityTasks,
     color: '#10B981'
   }];
 
-  // Department data for bar chart
+  // Department data for bar chart - changing 'יחידה' to 'מדור'
   const departmentData = departments.map(dept => {
     const peopleCount = people.filter(p => p.departmentId === dept.id).length;
     const tasksForDept = tasks.filter(t => {
@@ -81,31 +82,38 @@ const Dashboard: React.FC = () => {
   });
 
   // Task trends by month (mock data, in a real app this would be calculated)
-  const monthlyTaskData = [{
-    name: 'ינואר',
-    completed: 18,
-    created: 24
-  }, {
-    name: 'פברואר',
-    completed: 22,
-    created: 28
-  }, {
-    name: 'מרץ',
-    completed: 30,
-    created: 32
-  }, {
-    name: 'אפריל',
-    completed: 25,
-    created: 21
-  }, {
-    name: 'מאי',
-    completed: 15,
-    created: 18
-  }, {
-    name: 'יוני',
-    completed: completedTasks,
-    created: tasks.length
-  }];
+  const monthlyTaskData = [
+    {
+      name: 'ינואר',
+      completed: 18,
+      created: 24
+    },
+    {
+      name: 'פברואר',
+      completed: 22,
+      created: 28
+    },
+    {
+      name: 'מרץ',
+      completed: 30,
+      created: 32
+    },
+    {
+      name: 'אפריל',
+      completed: 25,
+      created: 21
+    },
+    {
+      name: 'מאי',
+      completed: 15,
+      created: 18
+    },
+    {
+      name: 'יוני',
+      completed: completedTasks,
+      created: tasks.length
+    }
+  ];
 
   // People availability by department
   const availabilityData = departments.map(dept => {
@@ -175,22 +183,22 @@ const Dashboard: React.FC = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium flex items-center">
               <Building2 className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 text-purple-400" />
-              יחידות
+              מדורים
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{departments.length}</div>
             <div className="flex justify-between items-center mt-1">
               <p className="text-xs text-muted-foreground">
-                {departments.length} יחידות פעילות
+                {departments.length} מדורים פעילים
               </p>
               <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300">
-                {Math.round(tasks.length / (departments.length || 1))} משימות לכל יחידה
+                {Math.round(tasks.length / (departments.length || 1))} משימות לכל מדור
               </span>
             </div>
             <div className="mt-4">
               <Button variant="outline" size="sm" className="w-full hover:bg-purple-900/30" onClick={() => navigate('/departments')}>
-                נהל יחידות
+                נהל מדורים
               </Button>
             </div>
           </CardContent>
@@ -280,9 +288,9 @@ const Dashboard: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart2 className="h-5 w-5 text-primary" />
-                  חיילים ומשימות לפי יחידה
+                  חיילים ומשימות לפי מדור
                 </CardTitle>
-                <CardDescription>השוואת מספר החיילים והמשימות בכל יחידה</CardDescription>
+                <CardDescription>השוואת מספר החיילים והמשימות בכל מדור</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-64 w-full">
@@ -345,7 +353,7 @@ const Dashboard: React.FC = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center text-green-400">
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  הושלמו
+                  הושלם
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -443,11 +451,11 @@ const Dashboard: React.FC = () => {
           
           <Card>
             <CardHeader>
-              <CardTitle>דירוג עומס עבודה לפי יחידה</CardTitle>
+              <CardTitle>דירוג עומס עבודה לפי מדור</CardTitle>
               <CardDescription>מדד המבוסס על מספר המשימות ביחס למספר החיילים</CardDescription>
             </CardHeader>
-            <CardContent className="rounded-xl">
-              <div className="h-12 space-y-4">
+            <CardContent>
+              <div className="space-y-4">
                 {departmentData.map(dept => {
                 const workloadRatio = dept.people > 0 ? dept.tasks / dept.people : 0;
                 const percentage = Math.min(100, Math.round(workloadRatio * 25));
@@ -483,7 +491,7 @@ const Dashboard: React.FC = () => {
                   <Users className="h-5 w-5 text-primary" />
                   זמינות חיילים
                 </CardTitle>
-                <CardDescription>חיילים זמינים לעומת לא זמינים בכל יחידה</CardDescription>
+                <CardDescription>חיילים זמינים לעומת לא זמינים בכל מדור</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-64 w-full">
