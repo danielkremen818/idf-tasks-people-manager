@@ -15,6 +15,9 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   register: (name: string, email: string, password: string, role?: UserRole) => Promise<void>;
+  updateUser: (userId: string, updates: Partial<User>) => Promise<void>;
+  allUsers: User[];
+  deleteUser: (userId: string) => Promise<void>;
 };
 
 // Mock users for demonstration (would be in the database in a real implementation)
@@ -38,6 +41,14 @@ const mockUsers: (User & { passwordHash: string })[] = [
     name: 'System Administrator',
     email: 'sysadmin@example.com',
     passwordHash: bcrypt.hashSync('sysadmin123', 10),
+    role: 'ADMIN',
+  },
+  // Adding a default admin user as requested
+  {
+    id: '4',
+    name: 'Task Force Commander',
+    email: 'commander@taskforce.com',
+    passwordHash: bcrypt.hashSync('commander123', 10),
     role: 'ADMIN',
   },
 ];
@@ -66,6 +77,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+
+  // Load all users (without password hashes) for admin management
+  useEffect(() => {
+    const users = mockUsers.map(({ passwordHash, ...user }) => user);
+    setAllUsers(users);
+  }, []);
 
   useEffect(() => {
     // Check for existing token on app load
@@ -159,6 +177,9 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
       // Add to mock users (in a real app this would be saved to the database)
       mockUsers.push(newUser);
 
+      // Update allUsers state
+      setAllUsers(prev => [...prev, { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role }]);
+
       // Create and store token
       const userToEncode = {
         id: newUser.id,
@@ -197,6 +218,104 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     }
   };
 
+  const updateUser = async (userId: string, updates: Partial<User>) => {
+    try {
+      setIsLoading(true);
+      
+      // Find the user to update
+      const userIndex = mockUsers.findIndex(u => u.id === userId);
+      if (userIndex === -1) {
+        throw new Error('User not found');
+      }
+
+      // Update the user in mockUsers
+      mockUsers[userIndex] = {
+        ...mockUsers[userIndex],
+        ...updates,
+      };
+
+      // Update allUsers state
+      setAllUsers(prev => 
+        prev.map(u => 
+          u.id === userId ? { ...u, ...updates } : u
+        )
+      );
+
+      // If the current user is being updated, update the user state and token
+      if (user && user.id === userId) {
+        const updatedUser = {
+          ...user,
+          ...updates
+        };
+        
+        setUser(updatedUser);
+        
+        // Update the token
+        const token = encodeToken(updatedUser);
+        localStorage.setItem('authToken', token);
+      }
+
+      toast({
+        title: "User Updated",
+        description: "User information has been successfully updated",
+      });
+      
+      logger.info('User updated successfully', { module: 'AuthContext', data: { userId } });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update user';
+      toast({
+        title: "Error Updating User",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      logger.error('User update failed', { module: 'AuthContext', data: error });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Find the user to delete
+      const userIndex = mockUsers.findIndex(u => u.id === userId);
+      if (userIndex === -1) {
+        throw new Error('User not found');
+      }
+
+      // Prevent deleting the current user
+      if (user && user.id === userId) {
+        throw new Error('Cannot delete your own account while logged in');
+      }
+
+      // Remove the user from mockUsers
+      mockUsers.splice(userIndex, 1);
+
+      // Update allUsers state
+      setAllUsers(prev => prev.filter(u => u.id !== userId));
+
+      toast({
+        title: "User Deleted",
+        description: "User has been successfully removed",
+      });
+      
+      logger.info('User deleted successfully', { module: 'AuthContext', data: { userId } });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete user';
+      toast({
+        title: "Error Deleting User",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      logger.error('User deletion failed', { module: 'AuthContext', data: error });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('authToken');
     setUser(null);
@@ -214,7 +333,10 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
       isLoading, 
       login, 
       logout, 
-      register 
+      register,
+      updateUser,
+      allUsers,
+      deleteUser
     }}>
       {children}
     </AuthContext.Provider>

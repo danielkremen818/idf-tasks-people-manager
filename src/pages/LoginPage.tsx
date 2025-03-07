@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/AuthContext';
-import { Shield, LogIn, User, Key, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Shield, LogIn, User, Key, ChevronRight, AlertTriangle, Lock } from 'lucide-react';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -55,6 +55,19 @@ const LoginPage = () => {
     visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
   };
   
+  const logoVariants = {
+    initial: { rotateY: 0 },
+    animate: { 
+      rotateY: 360,
+      transition: {
+        duration: 2,
+        repeat: Infinity,
+        repeatType: "loop",
+        repeatDelay: 5
+      }
+    }
+  };
+  
   const buttonVariants = {
     idle: { scale: 1 },
     hover: { scale: 1.05, transition: { duration: 0.2 } },
@@ -84,24 +97,46 @@ const LoginPage = () => {
             <CardHeader className="space-y-1 text-center relative">
               <motion.div 
                 className="flex justify-center mb-4"
-                initial={{ rotateY: 0 }}
-                animate={{ rotateY: 360 }}
-                transition={{ duration: 2, delay: 0.5, ease: "easeInOut" }}
+                variants={logoVariants}
+                initial="initial"
+                animate="animate"
               >
-                <Shield className="h-12 w-12 text-amber-500 drop-shadow-glow" />
+                <Lock className="h-14 w-14 text-amber-500 drop-shadow-glow" />
               </motion.div>
-              <CardTitle className="text-2xl font-bold tracking-tight text-amber-500">
-                IDF Command & Control
+              
+              <motion.h1
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ 
+                  opacity: 1, 
+                  y: 0,
+                  transition: { duration: 0.5, delay: 0.2 }
+                }}
+                className="text-3xl font-bold tracking-tight text-amber-500"
+              >
+                TASK-FORCE
+              </motion.h1>
+              
+              <CardTitle className="text-lg font-semibold tracking-tight text-white/90 mt-1">
+                Command & Control System
               </CardTitle>
+              
               <CardDescription className="text-gray-400">
                 Enter your credentials to access the system
               </CardDescription>
               
+              {/* Animated border */}
               <motion.div 
-                className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-500/0 via-amber-500 to-amber-500/0"
-                initial={{ scaleX: 0, opacity: 0 }}
-                animate={{ scaleX: 1, opacity: 1 }}
-                transition={{ duration: 1.5, delay: 0.2 }}
+                className="absolute top-0 right-0 h-1 bg-gradient-to-r from-amber-600/0 via-amber-600 to-amber-600/0"
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+              />
+              
+              <motion.div 
+                className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-amber-600/0 via-amber-600 to-amber-600/0"
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 0.8, delay: 0.7 }}
               />
             </CardHeader>
           </motion.div>
@@ -122,7 +157,7 @@ const LoginPage = () => {
               )}
             </AnimatePresence>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 login-form">
               <motion.div className="space-y-2" variants={itemVariants}>
                 <Label htmlFor="email" className="text-gray-300">Email</Label>
                 <div className="relative">
@@ -164,7 +199,7 @@ const LoginPage = () => {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium"
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium relative overflow-hidden group"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center justify-center">
@@ -172,13 +207,21 @@ const LoginPage = () => {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Logging in...
+                        Authenticating...
                       </span>
                     ) : (
-                      <span className="flex items-center justify-center">
-                        <LogIn className="mr-2 h-5 w-5" />
-                        Login
-                      </span>
+                      <>
+                        <span className="flex items-center justify-center relative z-10">
+                          <LogIn className="mr-2 h-5 w-5" />
+                          Access System
+                        </span>
+                        <motion.span 
+                          className="absolute inset-0 bg-amber-500/30 z-0"
+                          initial={{ x: '-100%' }}
+                          whileHover={{ x: '100%' }}
+                          transition={{ duration: 0.8, ease: "easeInOut" }}
+                        />
+                      </>
                     )}
                   </Button>
                 </motion.div>
@@ -211,14 +254,18 @@ const LoginPage = () => {
                       transition={{ duration: 0.3 }}
                       className="overflow-hidden w-full"
                     >
-                      <div className="mt-2 space-y-1 bg-gray-700/50 p-2 rounded-md">
-                        <div className="flex justify-between">
-                          <span>Admin:</span>
-                          <span className="text-amber-400">sysadmin@example.com / sysadmin123</span>
+                      <div className="mt-2 space-y-1 bg-gray-700/50 p-3 rounded-md">
+                        <div className="flex flex-col md:flex-row md:justify-between gap-1">
+                          <span className="font-semibold text-amber-400">Admin:</span>
+                          <span className="text-white">admin@example.com / admin123</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span>User:</span>
-                          <span className="text-amber-400">user@example.com / user123</span>
+                        <div className="flex flex-col md:flex-row md:justify-between gap-1">
+                          <span className="font-semibold text-amber-400">Task Force Commander:</span>
+                          <span className="text-white">commander@taskforce.com / commander123</span>
+                        </div>
+                        <div className="flex flex-col md:flex-row md:justify-between gap-1">
+                          <span className="font-semibold text-amber-400">User:</span>
+                          <span className="text-white">user@example.com / user123</span>
                         </div>
                       </div>
                     </motion.div>
@@ -241,6 +288,34 @@ const LoginPage = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
+          />
+          
+          {/* Animated background elements */}
+          <motion.div 
+            className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-amber-600/20 blur-3xl"
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.2, 0.3, 0.2],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              repeatType: "reverse"
+            }}
+          />
+          
+          <motion.div 
+            className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-blue-600/20 blur-3xl"
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.2, 0.3, 0.2],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              repeatType: "reverse",
+              delay: 1
+            }}
           />
         </Card>
       </motion.div>
