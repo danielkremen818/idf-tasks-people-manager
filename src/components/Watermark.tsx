@@ -17,10 +17,10 @@ const Watermark: React.FC = () => {
   
   return (
     <motion.div 
-      className="fixed bottom-2 right-2 text-[8px] text-white/20 select-none z-50 cursor-pointer"
-      initial={{ opacity: 0.1 }}
+      className="fixed bottom-4 right-4 text-primary font-bold text-xs select-none z-[9999] cursor-pointer"
+      initial={{ opacity: 0.2 }}
       animate={{ 
-        opacity: hovered ? 0.8 : 0.2,
+        opacity: hovered ? 1 : 0.6,
         scale: clicked ? [1, 1.5, 0.8, 1.2, 1] : 1,
         rotate: clicked ? [0, 10, -10, 5, 0] : 0,
         y: clicked ? [0, -10, 5, -5, 0] : 0
@@ -32,17 +32,21 @@ const Watermark: React.FC = () => {
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
       onClick={handleClick}
+      whileHover={{ 
+        textShadow: "0 0 8px rgba(246, 211, 101, 0.7)",
+        scale: 1.05
+      }}
     >
-      <span className="block text-center">By Daniel-Sahar-Kremen</span>
+      <span className="block text-center drop-shadow-glow animate-pulse-glow">DANIEL-SAHAR-KREMEN</span>
       
       {hovered && (
         <motion.div 
-          className="absolute bottom-full right-0 mb-2 p-1 bg-black/80 rounded text-white/90 whitespace-nowrap text-xs"
+          className="absolute bottom-full right-0 mb-2 p-2 bg-background/90 border border-primary rounded text-primary whitespace-nowrap text-xs"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}
         >
-          Hey there! You found me! 👋
+          Hey there! Thanks for using my app! 👋
         </motion.div>
       )}
       
@@ -55,8 +59,8 @@ const Watermark: React.FC = () => {
           }}
           transition={{ duration: 2 }}
         >
-          <div className="text-primary text-4xl font-bold drop-shadow-glow animate-pulse-glow">
-            Task-Force by Daniel!
+          <div className="text-primary text-5xl font-bold drop-shadow-glow animate-pulse-glow">
+            DANIEL SAHAR KREMEN
           </div>
         </motion.div>
       )}
