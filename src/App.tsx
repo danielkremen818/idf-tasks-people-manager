@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, HashRouter } from "react-router-dom";
 import { AppProvider } from "@/context/AppContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { logger } from "@/lib/logger";
@@ -47,16 +47,22 @@ const queryClient = new QueryClient({
 // Log application startup
 logger.info('Application starting up', { module: 'App' });
 
-// Determine basename for router
-const getBasename = () => {
-  // Check if we're in a deployment preview environment
+// Determine if using HashRouter for preview environment
+const shouldUseHashRouter = () => {
   const hostname = window.location.hostname;
-  if (hostname.includes('preview--') && hostname.includes('lovable.app')) {
-    console.log('Running in preview environment with basename');
-    return '/';
-  }
-  return '/';
+  // Use HashRouter in preview environment to avoid path issues
+  return hostname.includes('preview--') && hostname.includes('lovable.app');
 };
+
+// Debug info
+console.log('Environment info:', {
+  hostname: window.location.hostname,
+  pathname: window.location.pathname,
+  href: window.location.href,
+  usingHashRouter: shouldUseHashRouter()
+});
+
+const Router = shouldUseHashRouter() ? HashRouter : BrowserRouter;
 
 const App = () => (
   <ErrorBoundary>
@@ -65,7 +71,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter basename={getBasename()}>
+          <Router>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/people" element={<PeoplePage />} />
@@ -74,7 +80,7 @@ const App = () => (
               <Route path="/exemptions" element={<ExemptionsPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
+          </Router>
         </TooltipProvider>
       </AppProvider>
     </QueryClientProvider>

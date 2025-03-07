@@ -14,12 +14,14 @@ services:
       - NODE_ENV=production
       - PUBLIC_URL=/
       - VITE_BASE_URL=/
+      - VITE_API_URL=/api
+      - HOST=0.0.0.0
     networks:
       - app-network
     volumes:
       - app-data:/app/data
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
       interval: 30s
       timeout: 5s
       retries: 3
