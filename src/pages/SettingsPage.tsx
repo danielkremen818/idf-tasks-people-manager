@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
@@ -53,7 +52,7 @@ const SettingsPage = () => {
   
   // System Settings
   const [isDebugMode, setIsDebugMode] = useState(false);
-  const [appName, setAppName] = useState('מערכת משימות צה״ל');
+  const [appName, setAppName] = useState('Task-Force');
   const [language, setLanguage] = useState('he');
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [backupFrequency, setBackupFrequency] = useState('weekly');
@@ -70,7 +69,7 @@ const SettingsPage = () => {
         setAnimationSpeed(settings.animationSpeed ?? 'normal');
         setAccentColor(settings.accentColor ?? '#F6D365');
         setIsDebugMode(settings.isDebugMode ?? false);
-        setAppName(settings.appName ?? 'מערכת משימות צה״ל');
+        setAppName(settings.appName ?? 'Task-Force');
         setLanguage(settings.language ?? 'he');
         setNotificationsEnabled(settings.notificationsEnabled ?? true);
         setBackupFrequency(settings.backupFrequency ?? 'weekly');
@@ -88,14 +87,11 @@ const SettingsPage = () => {
   const applyTheme = (themeId, isDark) => {
     const theme = themes.find(t => t.id === themeId) || themes[0];
     
-    // Toggle dark/light mode
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else {
-      document.documentElement.classList.add('light');
-      document.documentElement.classList.remove('dark');
-    }
+    // Remove all theme classes first
+    document.documentElement.classList.remove('dark', 'light', 'military', 'navy', 'desert');
+    
+    // Add the selected theme class
+    document.documentElement.classList.add(themeId);
     
     // Apply custom properties
     document.documentElement.style.setProperty('--theme-primary', theme.primary);
@@ -112,7 +108,10 @@ const SettingsPage = () => {
   const handleThemeToggle = () => {
     const newIsDarkMode = !isDarkMode;
     setIsDarkMode(newIsDarkMode);
-    applyTheme(currentTheme, newIsDarkMode);
+    
+    // Keep current theme but toggle dark/light mode override
+    const themeToApply = newIsDarkMode ? currentTheme : 'light';
+    applyTheme(themeToApply, newIsDarkMode);
     
     toast({
       title: newIsDarkMode ? "Dark Mode Activated" : "Light Mode Activated",
@@ -163,6 +162,10 @@ const SettingsPage = () => {
     
     localStorage.setItem('appSettings', JSON.stringify(settings));
     
+    // Re-apply theme to ensure it takes effect
+    applyTheme(currentTheme, isDarkMode);
+    applyFontSize(fontSize);
+    
     toast({
       title: "Settings Saved",
       description: "Your preferences have been saved successfully",
@@ -178,7 +181,7 @@ const SettingsPage = () => {
     setAnimationSpeed('normal');
     setAccentColor('#F6D365');
     setIsDebugMode(false);
-    setAppName('מערכת משימות צה״ל');
+    setAppName('Task-Force');
     setLanguage('he');
     setNotificationsEnabled(true);
     setBackupFrequency('weekly');
@@ -249,11 +252,11 @@ const SettingsPage = () => {
               </TabsTrigger>
               <TabsTrigger value="appearance" className="flex items-center gap-2">
                 {isDarkMode ? <Moon size={16} /> : <Sun size={16} />}
-                Appearance
+                מראה
               </TabsTrigger>
               <TabsTrigger value="system" className="flex items-center gap-2">
                 <Database size={16} />
-                System
+                מערכת
               </TabsTrigger>
             </TabsList>
             
@@ -356,15 +359,15 @@ const SettingsPage = () => {
               <motion.div variants={cardVariants}>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Theme Selection</CardTitle>
-                    <CardDescription>Customize the look and feel of the application</CardDescription>
+                    <CardTitle>בחירת ערכת נושא</CardTitle>
+                    <CardDescription>התאם אישית את המראה והתחושה של האפליקציה</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <div>
-                          <Label htmlFor="darkMode" className="text-base">Dark Mode</Label>
-                          <p className="text-sm text-muted-foreground">Toggle between dark and light appearance</p>
+                          <Label htmlFor="darkMode" className="text-base">מצב כהה</Label>
+                          <p className="text-sm text-muted-foreground">החלף בין מראה כהה ובהיר</p>
                         </div>
                         <Switch 
                           id="darkMode" 
@@ -375,7 +378,7 @@ const SettingsPage = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label>Theme</Label>
+                      <Label>ערכת נושא</Label>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {themes.map(theme => (
                           <div 
@@ -547,14 +550,14 @@ const SettingsPage = () => {
               className="flex items-center gap-2"
             >
               <RotateCcw size={16} />
-              Reset Settings
+              איפוס הגדרות
             </Button>
             <Button 
               onClick={handleSaveSettings}
               className="flex items-center gap-2"
             >
               <Save size={16} />
-              Save Settings
+              שמור הגדרות
             </Button>
           </motion.div>
         </motion.div>

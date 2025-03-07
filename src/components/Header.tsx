@@ -9,7 +9,8 @@ import {
   ShieldAlert,
   Home,
   Settings,
-  LogOut
+  LogOut,
+  Shield
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
@@ -41,8 +42,30 @@ const Header: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <h1 className="text-xl font-bold text-amber-500">מערכת פיקוד ושליטה צה״לית</h1>
+            <div className="flex-shrink-0 flex items-center">
+              <motion.div
+                animate={{ 
+                  rotate: [0, 5, -5, 0],
+                  scale: [1, 1.05, 1]
+                }}
+                transition={{ 
+                  duration: 2, 
+                  ease: "easeInOut", 
+                  repeat: Infinity, 
+                  repeatType: "reverse" 
+                }}
+                className="mr-2"
+              >
+                <Shield className="h-6 w-6 text-amber-500" />
+              </motion.div>
+              <motion.h1 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="text-xl font-bold text-amber-500"
+              >
+                TASK-FORCE
+              </motion.h1>
             </div>
           </div>
           

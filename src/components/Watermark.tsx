@@ -33,7 +33,7 @@ const Watermark: React.FC = () => {
       onHoverEnd={() => setHovered(false)}
       onClick={handleClick}
     >
-      <span className="block text-center">By Daniel-sahar-Kremen</span>
+      <span className="block text-center">By Daniel-Sahar-Kremen</span>
       
       {hovered && (
         <motion.div 

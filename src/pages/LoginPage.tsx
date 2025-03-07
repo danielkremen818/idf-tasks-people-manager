@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -56,8 +55,8 @@ const LoginPage = () => {
   };
   
   const logoVariants = {
-    initial: { rotateY: 0 },
-    animate: { 
+    hidden: { rotateY: 0 },
+    visible: { 
       rotateY: 360,
       transition: {
         duration: 2,
@@ -97,9 +96,16 @@ const LoginPage = () => {
             <CardHeader className="space-y-1 text-center relative">
               <motion.div 
                 className="flex justify-center mb-4"
-                variants={logoVariants}
-                initial="initial"
-                animate="animate"
+                initial={{ rotateY: 0 }}
+                animate={{ 
+                  rotateY: 360,
+                  transition: {
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatType: "loop",
+                    repeatDelay: 5
+                  }
+                }}
               >
                 <Lock className="h-14 w-14 text-amber-500 drop-shadow-glow" />
               </motion.div>
