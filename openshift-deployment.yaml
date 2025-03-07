@@ -1,95 +1,407 @@
 
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Template
 metadata:
-  name: taskable-people-manager
-  labels:
-    app: taskable-people-manager
-    tier: frontend
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: taskable-people-manager
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-  template:
+  name: taskable-people-manager-template
+  annotations:
+    description: "Template for deploying the Taskable People Manager application with PostgreSQL"
+objects:
+  # ConfigMap for application configuration
+  - apiVersion: v1
+    kind: ConfigMap
     metadata:
+      name: taskable-config
+    data:
+      database-url: postgresql://admin:${DATABASE_PASSWORD}@${DATABASE_SERVICE_NAME}:5432/taskmanager
+      app-url: https://${APPLICATION_DOMAIN}
+
+  # Secret for database password
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: taskable-secrets
+    type: Opaque
+    stringData:
+      database-password: ${DATABASE_PASSWORD}
+      admin-password: ${ADMIN_PASSWORD}
+
+  # Persistent Volume Claim for PostgreSQL
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: ${DATABASE_SERVICE_NAME}-data
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: ${DATABASE_VOLUME_CAPACITY}
+
+  # PostgreSQL Deployment
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ${DATABASE_SERVICE_NAME}
+      labels:
+        app: ${DATABASE_SERVICE_NAME}
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: ${DATABASE_SERVICE_NAME}
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: ${DATABASE_SERVICE_NAME}
+        spec:
+          containers:
+            - name: postgresql
+              image: postgres:latest
+              ports:
+                - containerPort: 5432
+                  protocol: TCP
+              env:
+                - name: POSTGRES_USER
+                  value: admin
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: taskable-secrets
+                      key: database-password
+                - name: POSTGRES_DB
+                  value: taskmanager
+              volumeMounts:
+                - name: ${DATABASE_SERVICE_NAME}-data
+                  mountPath: /var/lib/postgresql/data
+                - name: init-db-script
+                  mountPath: /docker-entrypoint-initdb.d/
+              resources:
+                limits:
+                  memory: 512Mi
+                  cpu: 500m
+                requests:
+                  memory: 256Mi
+                  cpu: 100m
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - pg_isready -U admin -d taskmanager
+                initialDelaySeconds: 5
+                timeoutSeconds: 1
+          volumes:
+            - name: ${DATABASE_SERVICE_NAME}-data
+              persistentVolumeClaim:
+                claimName: ${DATABASE_SERVICE_NAME}-data
+            - name: init-db-script
+              configMap:
+                name: init-db-script
+
+  # Init DB Script ConfigMap
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: init-db-script
+    data:
+      init-db.sql: |
+        -- Initialize database schema based on prisma schema
+        
+        -- Create user roles enum
+        CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'SUPERVISOR', 'USER');
+        
+        -- Create task status enum
+        CREATE TYPE "TaskStatus" AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED');
+        
+        -- Create task priority enum
+        CREATE TYPE "TaskPriority" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'URGENT');
+        
+        -- Create Department table
+        CREATE TABLE "Department" (
+          "id" TEXT NOT NULL,
+          "name" TEXT NOT NULL,
+          "colorCode" TEXT NOT NULL,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL,
+          
+          PRIMARY KEY ("id")
+        );
+        
+        -- Create Exemption table
+        CREATE TABLE "Exemption" (
+          "id" TEXT NOT NULL,
+          "name" TEXT NOT NULL,
+          "description" TEXT NOT NULL,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL,
+          
+          PRIMARY KEY ("id")
+        );
+        
+        -- Create User table
+        CREATE TABLE "User" (
+          "id" TEXT NOT NULL,
+          "name" TEXT NOT NULL,
+          "email" TEXT NOT NULL,
+          "passwordHash" TEXT NOT NULL,
+          "role" "UserRole" NOT NULL DEFAULT 'USER',
+          "departmentId" TEXT,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL,
+          
+          PRIMARY KEY ("id"),
+          CONSTRAINT "User_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "Department"("id") ON DELETE SET NULL ON UPDATE CASCADE
+        );
+        
+        -- Create unique constraint on User email
+        CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+        
+        -- Create Person table
+        CREATE TABLE "Person" (
+          "id" TEXT NOT NULL,
+          "name" TEXT NOT NULL,
+          "email" TEXT NOT NULL,
+          "phone" TEXT NOT NULL,
+          "available" BOOLEAN NOT NULL DEFAULT true,
+          "emergencyContact" TEXT NOT NULL,
+          "departmentId" TEXT NOT NULL,
+          "userId" TEXT NOT NULL,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL,
+          
+          PRIMARY KEY ("id"),
+          CONSTRAINT "Person_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "Department"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+          CONSTRAINT "Person_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+        );
+        
+        -- Create unique constraint on Person email and userId
+        CREATE UNIQUE INDEX "Person_email_key" ON "Person"("email");
+        CREATE UNIQUE INDEX "Person_userId_key" ON "Person"("userId");
+        
+        -- Create Task table
+        CREATE TABLE "Task" (
+          "id" TEXT NOT NULL,
+          "title" TEXT NOT NULL,
+          "description" TEXT NOT NULL,
+          "status" "TaskStatus" NOT NULL DEFAULT 'PENDING',
+          "priority" "TaskPriority" NOT NULL DEFAULT 'MEDIUM',
+          "dueDate" TIMESTAMP(3) NOT NULL,
+          "assignedPersonId" TEXT,
+          "assignedById" TEXT NOT NULL,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL,
+          
+          PRIMARY KEY ("id"),
+          CONSTRAINT "Task_assignedPersonId_fkey" FOREIGN KEY ("assignedPersonId") REFERENCES "Person"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+          CONSTRAINT "Task_assignedById_fkey" FOREIGN KEY ("assignedById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+        );
+        
+        -- Create join table for Person_Exemption many-to-many relationship
+        CREATE TABLE "_PersonExemptions" (
+          "A" TEXT NOT NULL,
+          "B" TEXT NOT NULL,
+          
+          CONSTRAINT "_PersonExemptions_A_fkey" FOREIGN KEY ("A") REFERENCES "Exemption"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+          CONSTRAINT "_PersonExemptions_B_fkey" FOREIGN KEY ("B") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE
+        );
+        
+        -- Create join table for Task_Exemption many-to-many relationship
+        CREATE TABLE "_TaskProhibitedExemptions" (
+          "A" TEXT NOT NULL,
+          "B" TEXT NOT NULL,
+          
+          CONSTRAINT "_TaskProhibitedExemptions_A_fkey" FOREIGN KEY ("A") REFERENCES "Exemption"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+          CONSTRAINT "_TaskProhibitedExemptions_B_fkey" FOREIGN KEY ("B") REFERENCES "Task"("id") ON DELETE CASCADE ON UPDATE CASCADE
+        );
+        
+        -- Create additional indexes
+        CREATE UNIQUE INDEX "_PersonExemptions_AB_unique" ON "_PersonExemptions"("A", "B");
+        CREATE INDEX "_PersonExemptions_B_index" ON "_PersonExemptions"("B");
+        CREATE UNIQUE INDEX "_TaskProhibitedExemptions_AB_unique" ON "_TaskProhibitedExemptions"("A", "B");
+        CREATE INDEX "_TaskProhibitedExemptions_B_index" ON "_TaskProhibitedExemptions"("B");
+        
+        -- Create required_skills column for Task table (Array type)
+        ALTER TABLE "Task" ADD COLUMN "requiredSkills" TEXT[];
+        
+        -- Insert default admin user with hashed password (admin123)
+        INSERT INTO "User" ("id", "name", "email", "passwordHash", "role", "createdAt", "updatedAt")
+        VALUES ('1', 'Task Force Commander', 'commander@taskforce.com', '$2a$10$hBn5gu6cGelJNiE6DDsaBOmZgyumCSj7TeQCBgpChbVvJwE.ttuc.', 'ADMIN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+  # PostgreSQL Service
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${DATABASE_SERVICE_NAME}
+      labels:
+        app: ${DATABASE_SERVICE_NAME}
+    spec:
+      ports:
+        - name: postgresql
+          port: 5432
+          targetPort: 5432
+      selector:
+        app: ${DATABASE_SERVICE_NAME}
+
+  # Application Deployment
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: taskable-people-manager
       labels:
         app: taskable-people-manager
         tier: frontend
     spec:
-      containers:
-        - name: taskable-people-manager
-          image: ${REGISTRY_URL}/taskable-people-manager:latest
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 80
-              name: http
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 10
-            periodSeconds: 5
-            timeoutSeconds: 2
-            successThreshold: 1
-            failureThreshold: 3
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 30
-            periodSeconds: 30
-            timeoutSeconds: 2
-            successThreshold: 1
-            failureThreshold: 3
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-      terminationGracePeriodSeconds: 30
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: taskable-people-manager-service
-  labels:
-    app: taskable-people-manager
-spec:
-  selector:
-    app: taskable-people-manager
-  ports:
-    - port: 80
-      targetPort: 80
-      name: http
-  type: ClusterIP
----
-apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-  name: taskable-people-manager-route
-  labels:
-    app: taskable-people-manager
-  annotations:
-    description: "Route for Taskable People Manager frontend"
-    kubernetes.io/tls-acme: "true"
-spec:
-  host: ${APPLICATION_DOMAIN}
-  to:
+      replicas: ${REPLICAS}
+      selector:
+        matchLabels:
+          app: taskable-people-manager
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 0
+      template:
+        metadata:
+          labels:
+            app: taskable-people-manager
+            tier: frontend
+        spec:
+          containers:
+            - name: taskable-people-manager
+              image: ${REGISTRY_URL}/taskable-people-manager:latest
+              imagePullPolicy: Always
+              ports:
+                - containerPort: 80
+                  name: http
+              env:
+                - name: NODE_ENV
+                  value: production
+                - name: PUBLIC_URL
+                  value: /
+                - name: VITE_BASE_URL
+                  value: /
+                - name: VITE_API_URL
+                  value: /api
+                - name: DATABASE_URL
+                  valueFrom:
+                    configMapKeyRef:
+                      name: taskable-config
+                      key: database-url
+                - name: POSTGRES_HOST
+                  value: ${DATABASE_SERVICE_NAME}
+                - name: POSTGRES_USER
+                  value: admin
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: taskable-secrets
+                      key: database-password
+                - name: POSTGRES_DB
+                  value: taskmanager
+              resources:
+                requests:
+                  cpu: "100m"
+                  memory: "128Mi"
+                limits:
+                  cpu: "500m"
+                  memory: "512Mi"
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 80
+                initialDelaySeconds: 10
+                periodSeconds: 5
+                timeoutSeconds: 2
+                successThreshold: 1
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 80
+                initialDelaySeconds: 30
+                periodSeconds: 30
+                timeoutSeconds: 2
+                successThreshold: 1
+                failureThreshold: 3
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+          terminationGracePeriodSeconds: 30
+
+  # Application Service
+  - apiVersion: v1
     kind: Service
-    name: taskable-people-manager-service
-  tls:
-    termination: edge
-    insecureEdgeTerminationPolicy: Redirect
-  port:
-    targetPort: http
+    metadata:
+      name: taskable-people-manager-service
+      labels:
+        app: taskable-people-manager
+    spec:
+      selector:
+        app: taskable-people-manager
+      ports:
+        - port: 80
+          targetPort: 80
+          name: http
+      type: ClusterIP
+
+  # Application Route
+  - apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      name: taskable-people-manager-route
+      labels:
+        app: taskable-people-manager
+      annotations:
+        description: "Route for Taskable People Manager frontend"
+        kubernetes.io/tls-acme: "true"
+    spec:
+      host: ${APPLICATION_DOMAIN}
+      to:
+        kind: Service
+        name: taskable-people-manager-service
+      tls:
+        termination: edge
+        insecureEdgeTerminationPolicy: Redirect
+      port:
+        targetPort: http
+
+parameters:
+  - name: REGISTRY_URL
+    displayName: Registry URL
+    description: The URL of the registry for container images
+    required: true
+    value: image-registry.openshift-image-registry.svc:5000/taskable-project
+  - name: APPLICATION_DOMAIN
+    displayName: Application Domain
+    description: The domain name for the application
+    value: taskable-people-manager.apps.openshift.example.com
+    required: true
+  - name: DATABASE_SERVICE_NAME
+    displayName: Database Service Name
+    description: The name of the PostgreSQL service
+    value: postgres
+    required: true
+  - name: DATABASE_PASSWORD
+    displayName: Database Password
+    description: Password for the PostgreSQL admin user
+    from: '[a-zA-Z0-9]{16}'
+    generate: expression
+    required: true
+  - name: DATABASE_VOLUME_CAPACITY
+    displayName: Database Volume Capacity
+    description: Volume space available for data
+    value: 1Gi
+    required: true
+  - name: ADMIN_PASSWORD
+    displayName: Admin Password
+    description: Password for the admin user
+    from: '[a-zA-Z0-9]{12}'
+    generate: expression
+    required: true
+  - name: REPLICAS
+    displayName: Number of Replicas
+    description: Number of replicas to run
+    value: "2"
+    required: true

@@ -38,7 +38,7 @@ RUN npm run build && \
 FROM nginx:alpine
 
 # Add security headers and optimize nginx
-RUN apk add --no-cache curl && \
+RUN apk add --no-cache curl postgresql-client && \
     rm -rf /etc/nginx/conf.d/*
 
 # Copy the built application from the previous stage
@@ -49,6 +49,10 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Create a simple health check page
 RUN echo "OK" > /usr/share/nginx/html/health
+
+# Create startup script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 # Create military texture background
 RUN mkdir -p /usr/share/nginx/html/assets
@@ -61,9 +65,6 @@ RUN echo "Build date: $(date)" > /usr/share/nginx/html/version.txt
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chmod -R 755 /usr/share/nginx/html
 
-# Use non-root user
-USER nginx
-
 # Expose port 80
 EXPOSE 80
 
@@ -71,5 +72,6 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD wget -q --spider http://localhost/health || exit 1
 
-# Start nginx
+# Use the entrypoint script
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]

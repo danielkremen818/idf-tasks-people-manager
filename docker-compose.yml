@@ -16,8 +16,13 @@ services:
       - VITE_BASE_URL=/
       - VITE_API_URL=/api
       - HOST=0.0.0.0
+      - POSTGRES_HOST=db
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=taskmanager
+      - DATABASE_URL=postgresql://admin:password@db:5432/taskmanager
     networks:
-      - app-network
+      - task-manager-network
     volumes:
       - app-data:/app/data
     healthcheck:
@@ -44,8 +49,9 @@ services:
       POSTGRES_DB: taskmanager
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
-      - app-network
+      - task-manager-network
     ports:
       - "5432:5432"
     healthcheck:
@@ -59,6 +65,27 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
+
+  # Database management UI
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@taskforce.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - task-manager-network
+    depends_on:
+      - db
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256M
 
   # Reverse proxy for security and SSL termination
   # Enable this when deploying to production with HTTPS
@@ -74,7 +101,7 @@ services:
     depends_on:
       - app
     networks:
-      - app-network
+      - task-manager-network
     environment:
       - VIRTUAL_HOST=preview--idf-tasks-people-manager.lovable.app,idf-tasks-people-manager.lovable.app
     deploy:
@@ -89,11 +116,13 @@ services:
       retries: 3
 
 networks:
-  app-network:
+  task-manager-network:
     driver: bridge
 
 volumes:
   app-data:
     driver: local
   postgres-data:
+    driver: local
+  pgadmin-data:
     driver: local

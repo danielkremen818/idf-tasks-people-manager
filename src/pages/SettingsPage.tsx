@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
@@ -10,9 +11,12 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, Database, Sun, Moon, Save, RotateCcw, Info, Brush, Palette, Layout, Globe, BellRing } from 'lucide-react';
+import { Shield, Database, Sun, Moon, Save, RotateCcw, Info, Brush, Palette, Layout, Globe, BellRing, UserPlus, Trash2, UserCog, Users, Lock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { UserRole } from '@/lib/types';
 
 // Available themes
 const themes = [
@@ -41,7 +45,7 @@ const animationSpeeds = [
 
 const SettingsPage = () => {
   const { departments, exemptions } = useAppContext();
-  const { user } = useAuth();
+  const { user, allUsers, updateUser, deleteUser, register } = useAuth();
   
   // UI Settings
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -56,6 +60,17 @@ const SettingsPage = () => {
   const [language, setLanguage] = useState('he');
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [backupFrequency, setBackupFrequency] = useState('weekly');
+  
+  // User Management
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserRole, setNewUserRole] = useState<UserRole>('USER');
+  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
+  const [editUserData, setEditUserData] = useState<{id: string, name: string, email: string, password: string, role: UserRole} | null>(null);
+  
+  // Check if user is admin
+  const isAdmin = user?.role === 'ADMIN';
   
   // Load settings from localStorage on component mount
   useEffect(() => {
@@ -215,6 +230,108 @@ const SettingsPage = () => {
     }, 3000);
   };
   
+  // Function to handle adding a new user
+  const handleAddUser = async () => {
+    try {
+      if (!newUserName || !newUserEmail || !newUserPassword) {
+        toast({
+          title: "Missing Information",
+          description: "Please fill in all required fields",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      await register(newUserName, newUserEmail, newUserPassword, newUserRole);
+      
+      // Reset form
+      setNewUserName('');
+      setNewUserEmail('');
+      setNewUserPassword('');
+      setNewUserRole('USER');
+      
+      // Close dialog
+      setShowAddUserDialog(false);
+      
+      toast({
+        title: "User Added",
+        description: `${newUserName} has been added successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error Adding User",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Function to handle user deletion
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    try {
+      // Confirm before deleting
+      if (!window.confirm(`Are you sure you want to delete user ${userName}?`)) {
+        return;
+      }
+      
+      await deleteUser(userId);
+      
+      toast({
+        title: "User Deleted",
+        description: `${userName} has been removed successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error Deleting User",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Function to open edit user dialog
+  const handleEditUser = (userId: string) => {
+    const userToEdit = allUsers.find(u => u.id === userId);
+    if (userToEdit) {
+      setEditUserData({
+        id: userToEdit.id,
+        name: userToEdit.name,
+        email: userToEdit.email,
+        password: '', // We don't show the current password
+        role: userToEdit.role
+      });
+    }
+  };
+  
+  // Function to update user
+  const handleUpdateUser = async () => {
+    try {
+      if (!editUserData) return;
+      
+      const updates: {name?: string, email?: string, role?: UserRole} = {};
+      
+      if (editUserData.name) updates.name = editUserData.name;
+      if (editUserData.email) updates.email = editUserData.email;
+      if (editUserData.role) updates.role = editUserData.role;
+      
+      await updateUser(editUserData.id, updates);
+      
+      // Close edit dialog
+      setEditUserData(null);
+      
+      toast({
+        title: "User Updated",
+        description: "User information has been updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error Updating User",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive"
+      });
+    }
+  };
+  
   // Animation variants
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -245,7 +362,7 @@ const SettingsPage = () => {
           </motion.h1>
           
           <Tabs defaultValue="general" className="space-y-6">
-            <TabsList className="grid grid-cols-3 mb-8">
+            <TabsList className="grid grid-cols-4 mb-8">
               <TabsTrigger value="general" className="flex items-center gap-2">
                 <Info size={16} />
                 כללי
@@ -257,6 +374,10 @@ const SettingsPage = () => {
               <TabsTrigger value="system" className="flex items-center gap-2">
                 <Database size={16} />
                 מערכת
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center gap-2">
+                <Users size={16} />
+                ניהול משתמשים
               </TabsTrigger>
             </TabsList>
             
@@ -531,6 +652,210 @@ const SettingsPage = () => {
                         <div>
                           <p className="font-medium">Administrator Access Required</p>
                           <p className="text-sm">You need administrator privileges to access these settings</p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </TabsContent>
+            
+            <TabsContent value="users" className="space-y-6">
+              <motion.div variants={cardVariants}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>ניהול משתמשים</span>
+                      {isAdmin && (
+                        <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
+                          <DialogTrigger asChild>
+                            <Button size="sm" className="flex items-center gap-2">
+                              <UserPlus size={16} />
+                              <span>הוסף משתמש</span>
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>הוסף משתמש חדש</DialogTitle>
+                              <DialogDescription>
+                                Add a new user to the system with appropriate permissions.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="name">שם</Label>
+                                <Input 
+                                  id="name" 
+                                  value={newUserName} 
+                                  onChange={(e) => setNewUserName(e.target.value)}
+                                  placeholder="Enter user's name"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="email">אימייל</Label>
+                                <Input 
+                                  id="email" 
+                                  type="email" 
+                                  value={newUserEmail} 
+                                  onChange={(e) => setNewUserEmail(e.target.value)}
+                                  placeholder="Enter email address"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="password">סיסמה</Label>
+                                <Input 
+                                  id="password" 
+                                  type="password" 
+                                  value={newUserPassword} 
+                                  onChange={(e) => setNewUserPassword(e.target.value)}
+                                  placeholder="Enter password"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="role">תפקיד</Label>
+                                <Select 
+                                  value={newUserRole} 
+                                  onValueChange={(value) => setNewUserRole(value as UserRole)}
+                                >
+                                  <SelectTrigger id="role">
+                                    <SelectValue placeholder="Select role" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="ADMIN">מנהל מערכת</SelectItem>
+                                    <SelectItem value="SUPERVISOR">מפקד</SelectItem>
+                                    <SelectItem value="USER">משתמש רגיל</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <Button variant="outline" onClick={() => setShowAddUserDialog(false)}>ביטול</Button>
+                              <Button onClick={handleAddUser}>הוסף משתמש</Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                    </CardTitle>
+                    <CardDescription>
+                      View and manage system users and their permissions
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {isAdmin ? (
+                      <>
+                        <div className="rounded-md border">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>שם</TableHead>
+                                <TableHead>אימייל</TableHead>
+                                <TableHead>תפקיד</TableHead>
+                                <TableHead className="text-right">פעולות</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {allUsers.map(userItem => (
+                                <TableRow key={userItem.id}>
+                                  <TableCell className="font-medium">{userItem.name}</TableCell>
+                                  <TableCell>{userItem.email}</TableCell>
+                                  <TableCell>
+                                    <span className={`px-2 py-1 rounded-full text-xs ${
+                                      userItem.role === 'ADMIN' 
+                                        ? 'bg-amber-100 text-amber-800' 
+                                        : userItem.role === 'SUPERVISOR'
+                                          ? 'bg-blue-100 text-blue-800'
+                                          : 'bg-gray-100 text-gray-800'
+                                    }`}>
+                                      {userItem.role === 'ADMIN' ? 'מנהל מערכת' : 
+                                       userItem.role === 'SUPERVISOR' ? 'מפקד' : 'משתמש רגיל'}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                      <Dialog open={editUserData?.id === userItem.id} onOpenChange={(open) => !open && setEditUserData(null)}>
+                                        <DialogTrigger asChild>
+                                          <Button 
+                                            variant="ghost" 
+                                            size="icon"
+                                            onClick={() => handleEditUser(userItem.id)}
+                                          >
+                                            <UserCog size={16} />
+                                          </Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                          <DialogHeader>
+                                            <DialogTitle>Edit User: {editUserData?.name}</DialogTitle>
+                                            <DialogDescription>
+                                              Update user information and permissions
+                                            </DialogDescription>
+                                          </DialogHeader>
+                                          {editUserData && (
+                                            <div className="space-y-4 py-4">
+                                              <div className="space-y-2">
+                                                <Label htmlFor="editName">שם</Label>
+                                                <Input 
+                                                  id="editName" 
+                                                  value={editUserData.name} 
+                                                  onChange={(e) => setEditUserData({...editUserData, name: e.target.value})}
+                                                />
+                                              </div>
+                                              <div className="space-y-2">
+                                                <Label htmlFor="editEmail">אימייל</Label>
+                                                <Input 
+                                                  id="editEmail" 
+                                                  type="email" 
+                                                  value={editUserData.email} 
+                                                  onChange={(e) => setEditUserData({...editUserData, email: e.target.value})}
+                                                />
+                                              </div>
+                                              <div className="space-y-2">
+                                                <Label htmlFor="editRole">תפקיד</Label>
+                                                <Select 
+                                                  value={editUserData.role} 
+                                                  onValueChange={(value) => setEditUserData({...editUserData, role: value as UserRole})}
+                                                >
+                                                  <SelectTrigger id="editRole">
+                                                    <SelectValue placeholder="Select role" />
+                                                  </SelectTrigger>
+                                                  <SelectContent>
+                                                    <SelectItem value="ADMIN">מנהל מערכת</SelectItem>
+                                                    <SelectItem value="SUPERVISOR">מפקד</SelectItem>
+                                                    <SelectItem value="USER">משתמש רגיל</SelectItem>
+                                                  </SelectContent>
+                                                </Select>
+                                              </div>
+                                            </div>
+                                          )}
+                                          <DialogFooter>
+                                            <Button variant="outline" onClick={() => setEditUserData(null)}>ביטול</Button>
+                                            <Button onClick={handleUpdateUser}>עדכן משתמש</Button>
+                                          </DialogFooter>
+                                        </DialogContent>
+                                      </Dialog>
+                                      
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon"
+                                        className="text-destructive hover:text-destructive/90"
+                                        onClick={() => handleDeleteUser(userItem.id, userItem.name)}
+                                        disabled={userItem.id === user?.id} // Prevent deleting current user
+                                      >
+                                        <Trash2 size={16} />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2 p-4 rounded-lg bg-amber-900/20 border border-amber-800/30 text-amber-200">
+                        <Lock className="h-5 w-5" />
+                        <div>
+                          <p className="font-medium">Administrator Access Required</p>
+                          <p className="text-sm">Only system administrators can manage users</p>
                         </div>
                       </div>
                     )}
