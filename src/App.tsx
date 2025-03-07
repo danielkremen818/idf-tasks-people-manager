@@ -22,11 +22,6 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 
-// Polyfill Buffer to prevent JWT errors in browser
-if (typeof window !== 'undefined') {
-  window.Buffer = window.Buffer || require('buffer').Buffer;
-}
-
 // Configure query client with better error handling
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -83,7 +78,7 @@ if (typeof document !== 'undefined') {
 const App = () => {
   // If we're in development mode, bypass the JWT errors
   if (process.env.NODE_ENV === 'development') {
-    console.warn('Running in development mode - bypassing JWT validation');
+    console.warn('Running in development mode');
   }
 
   return (

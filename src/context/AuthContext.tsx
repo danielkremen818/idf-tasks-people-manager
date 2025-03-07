@@ -4,9 +4,8 @@ import { User, UserRole } from '@/lib/types';
 import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 
-// For demo purposes, we're using a JWT_SECRET here. In production, this should be an environment variable.
+// For demo purposes only - in production this would be an environment variable
 const JWT_SECRET = 'your-jwt-secret-key';
 
 type AuthContextType = {
@@ -36,6 +35,25 @@ const mockUsers: (User & { passwordHash: string })[] = [
   },
 ];
 
+// Simple function to encode a user object to a token-like string
+// This avoids using jsonwebtoken in the browser which can cause issues
+const encodeToken = (user: Omit<User, 'passwordHash'>) => {
+  const payload = JSON.stringify(user);
+  const base64Payload = btoa(payload);
+  return base64Payload;
+};
+
+// Function to decode the token
+const decodeToken = (token: string) => {
+  try {
+    const payload = atob(token);
+    return JSON.parse(payload) as User;
+  } catch (error) {
+    logger.error('Invalid token', { module: 'AuthContext', data: error });
+    return null;
+  }
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
@@ -47,9 +65,14 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     const token = localStorage.getItem('authToken');
     if (token) {
       try {
-        const decoded = jwt.verify(token, JWT_SECRET) as User;
-        setUser(decoded);
-        logger.info('User authenticated from token', { module: 'AuthContext' });
+        const decoded = decodeToken(token);
+        if (decoded) {
+          setUser(decoded);
+          logger.info('User authenticated from token', { module: 'AuthContext' });
+        } else {
+          // Invalid token
+          localStorage.removeItem('authToken');
+        }
       } catch (error) {
         logger.error('Invalid token, logging out', { module: 'AuthContext', data: error });
         localStorage.removeItem('authToken');
@@ -68,12 +91,14 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
         throw new Error('Invalid email or password');
       }
 
-      // Create a JWT token
-      const token = jwt.sign(
-        { id: user.id, name: user.name, email: user.email, role: user.role },
-        JWT_SECRET,
-        { expiresIn: '12h' }
-      );
+      // Create a simple token (not using JWT to avoid browser compatibility issues)
+      const userToEncode = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      };
+      const token = encodeToken(userToEncode);
 
       // Store the token
       localStorage.setItem('authToken', token);
@@ -128,11 +153,13 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
       mockUsers.push(newUser);
 
       // Create and store token
-      const token = jwt.sign(
-        { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role },
-        JWT_SECRET,
-        { expiresIn: '12h' }
-      );
+      const userToEncode = {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+      };
+      const token = encodeToken(userToEncode);
       localStorage.setItem('authToken', token);
 
       // Set user state
