@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '@/context/AppContext';
 import Header from '@/components/Header';
 import TaskCard from '@/components/TaskCard';
@@ -43,6 +43,19 @@ const TasksPage = () => {
     dueDate: new Date().toISOString().substring(0, 10),
   });
   
+  // Filter eligible people based on their exemptions
+  const eligiblePeople = useMemo(() => {
+    return people.filter(person => {
+      // Check if the person has any prohibited exemptions
+      const hasProhibitedExemption = person.exemptionIds.some(exemptionId => 
+        formData.prohibitedExemptionIds.includes(exemptionId)
+      );
+      
+      // Only include available people who don't have prohibited exemptions
+      return person.available && !hasProhibitedExemption;
+    });
+  }, [people, formData.prohibitedExemptionIds]);
+  
   // Handle opening the dialog for adding a new task
   const handleAddTask = () => {
     setSelectedTask(null);
@@ -69,6 +82,18 @@ const TasksPage = () => {
   
   // Handle form submission
   const handleSubmit = () => {
+    // Check if assigned person is still eligible
+    if (formData.assignedPersonId) {
+      const isEligible = eligiblePeople.some(p => p.id === formData.assignedPersonId);
+      if (!isEligible) {
+        // Reset assignedPersonId if the person is no longer eligible
+        setFormData({
+          ...formData,
+          assignedPersonId: null
+        });
+      }
+    }
+    
     if (selectedTask) {
       updateTask(formData);
     } else {
@@ -99,9 +124,22 @@ const TasksPage = () => {
   // Handle checkbox change for prohibited exemptions
   const handleExemptionChange = (exemptionId: string, checked: boolean) => {
     if (checked) {
+      // When adding a prohibited exemption, also check if the current assignee has it
+      const updatedExemptionIds = [...formData.prohibitedExemptionIds, exemptionId];
+      let updatedAssignedPersonId = formData.assignedPersonId;
+      
+      if (formData.assignedPersonId) {
+        const assignedPerson = people.find(p => p.id === formData.assignedPersonId);
+        if (assignedPerson && assignedPerson.exemptionIds.includes(exemptionId)) {
+          // Reset the assignee if they have this prohibited exemption
+          updatedAssignedPersonId = null;
+        }
+      }
+      
       setFormData({
         ...formData,
-        prohibitedExemptionIds: [...formData.prohibitedExemptionIds, exemptionId]
+        prohibitedExemptionIds: updatedExemptionIds,
+        assignedPersonId: updatedAssignedPersonId
       });
     } else {
       setFormData({
@@ -124,7 +162,7 @@ const TasksPage = () => {
   });
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
@@ -136,7 +174,7 @@ const TasksPage = () => {
             </Button>
           </div>
           
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+          <div className="bg-card rounded-lg shadow-sm p-4 mb-6">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute right-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -233,14 +271,11 @@ const TasksPage = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unassigned">לא מוקצה</SelectItem>
-                  {people
-                    .filter(person => person.available)
-                    .map(person => (
-                      <SelectItem key={person.id} value={person.id}>
-                        {person.name}
-                      </SelectItem>
-                    ))
-                  }
+                  {eligiblePeople.map(person => (
+                    <SelectItem key={person.id} value={person.id}>
+                      {person.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

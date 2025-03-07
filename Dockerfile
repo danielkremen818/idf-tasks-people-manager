@@ -37,6 +37,10 @@ RUN npm run build && \
 # Stage 2: Serve the application
 FROM nginx:alpine
 
+# Add security headers and optimize nginx
+RUN apk add --no-cache curl && \
+    rm -rf /etc/nginx/conf.d/*
+
 # Copy the built application from the previous stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
@@ -45,6 +49,16 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Create a simple health check page
 RUN echo "OK" > /usr/share/nginx/html/health
+
+# Create version info file
+RUN echo "Build date: $(date)" > /usr/share/nginx/html/version.txt
+
+# Set proper permissions
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chmod -R 755 /usr/share/nginx/html
+
+# Use non-root user
+USER nginx
 
 # Expose port 80
 EXPOSE 80

@@ -14,6 +14,7 @@ import PeoplePage from "./pages/PeoplePage";
 import TasksPage from "./pages/TasksPage";
 import DepartmentsPage from "./pages/DepartmentsPage";
 import ExemptionsPage from "./pages/ExemptionsPage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
 // Configure query client with better error handling
@@ -64,6 +65,11 @@ console.log('Environment info:', {
 
 const Router = shouldUseHashRouter() ? HashRouter : BrowserRouter;
 
+// Apply dark mode by default
+if (typeof document !== 'undefined') {
+  document.documentElement.classList.remove('light');
+}
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -78,6 +84,7 @@ const App = () => (
               <Route path="/tasks" element={<TasksPage />} />
               <Route path="/departments" element={<DepartmentsPage />} />
               <Route path="/exemptions" element={<ExemptionsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Router>
