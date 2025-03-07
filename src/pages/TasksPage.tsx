@@ -153,7 +153,7 @@ const TasksPage = () => {
                   <SelectValue placeholder="כל הסטטוסים" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">כל הסטטוסים</SelectItem>
+                  <SelectItem value="filter-all">כל הסטטוסים</SelectItem>
                   <SelectItem value="ממתין">ממתין</SelectItem>
                   <SelectItem value="בביצוע">בביצוע</SelectItem>
                   <SelectItem value="הושלם">הושלם</SelectItem>
@@ -166,7 +166,7 @@ const TasksPage = () => {
                   <SelectValue placeholder="כל העדיפויות" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">כל העדיפויות</SelectItem>
+                  <SelectItem value="filter-all">כל העדיפויות</SelectItem>
                   <SelectItem value="נמוכה">נמוכה</SelectItem>
                   <SelectItem value="בינונית">בינונית</SelectItem>
                   <SelectItem value="גבוהה">גבוהה</SelectItem>
@@ -225,14 +225,14 @@ const TasksPage = () => {
             <div className="grid gap-2">
               <Label htmlFor="assignedPerson">מבצע המשימה</Label>
               <Select 
-                value={formData.assignedPersonId || ''} 
-                onValueChange={(value) => setFormData({ ...formData, assignedPersonId: value || null })}
+                value={formData.assignedPersonId || 'unassigned'} 
+                onValueChange={(value) => setFormData({ ...formData, assignedPersonId: value === 'unassigned' ? null : value })}
               >
                 <SelectTrigger id="assignedPerson">
                   <SelectValue placeholder="בחר חייל" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">לא מוקצה</SelectItem>
+                  <SelectItem value="unassigned">לא מוקצה</SelectItem>
                   {people
                     .filter(person => person.available)
                     .map(person => (

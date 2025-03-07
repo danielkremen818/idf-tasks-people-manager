@@ -1,0 +1,95 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskable-people-manager
+  labels:
+    app: taskable-people-manager
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: taskable-people-manager
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: taskable-people-manager
+        tier: frontend
+    spec:
+      containers:
+        - name: taskable-people-manager
+          image: ${REGISTRY_URL}/taskable-people-manager:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 3
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: taskable-people-manager-service
+  labels:
+    app: taskable-people-manager
+spec:
+  selector:
+    app: taskable-people-manager
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: taskable-people-manager-route
+  labels:
+    app: taskable-people-manager
+  annotations:
+    description: "Route for Taskable People Manager frontend"
+    kubernetes.io/tls-acme: "true"
+spec:
+  host: ${APPLICATION_DOMAIN}
+  to:
+    kind: Service
+    name: taskable-people-manager-service
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  port:
+    targetPort: http

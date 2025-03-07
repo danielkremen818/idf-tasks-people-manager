@@ -130,7 +130,7 @@ const PeoplePage = () => {
                   <SelectValue placeholder="כל היחידות" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">כל היחידות</SelectItem>
+                  <SelectItem value="all">כל היחידות</SelectItem>
                   {departments.map(dept => (
                     <SelectItem key={dept.id} value={dept.id}>
                       {dept.name}
@@ -140,9 +140,9 @@ const PeoplePage = () => {
               </Select>
               
               <Select 
-                value={availabilityFilter === null ? '' : availabilityFilter ? 'true' : 'false'} 
+                value={availabilityFilter === null ? 'all' : availabilityFilter ? 'true' : 'false'} 
                 onValueChange={(value) => {
-                  if (value === '') {
+                  if (value === 'all') {
                     setAvailabilityFilter(null);
                   } else {
                     setAvailabilityFilter(value === 'true');
@@ -153,7 +153,7 @@ const PeoplePage = () => {
                   <SelectValue placeholder="סטטוס זמינות" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">הכל</SelectItem>
+                  <SelectItem value="all">הכל</SelectItem>
                   <SelectItem value="true">זמינים</SelectItem>
                   <SelectItem value="false">לא זמינים</SelectItem>
                 </SelectContent>

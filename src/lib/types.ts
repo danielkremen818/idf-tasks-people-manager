@@ -42,6 +42,8 @@ export type AppContextType = {
   exemptions: ExemptionType[];
   people: Person[];
   tasks: Task[];
+  isLoading?: boolean;
+  error?: Error | null;
   addDepartment: (department: Department) => void;
   updateDepartment: (department: Department) => void;
   deleteDepartment: (id: string) => void;
